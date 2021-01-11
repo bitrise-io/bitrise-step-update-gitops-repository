@@ -27,10 +27,10 @@ type github struct {
 }
 
 // NewGithub returns a new Github client to interact with a given repository.
-func NewGithub(ctx context.Context, repoURL string, pat stepconf.Secret) (*github, error) {
+func NewGithub(ctx context.Context, repoURL string, token stepconf.Secret) (*github, error) {
 	// Initialize client for Github API.
 	tokenSource := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: string(pat)},
+		&oauth2.Token{AccessToken: string(token)},
 	)
 	tokenClient := oauth2.NewClient(ctx, tokenSource)
 	ghClient := gogh.NewClient(tokenClient)
@@ -73,7 +73,7 @@ type openPullRequestParams struct {
 }
 
 func (gh github) OpenPullRequest(ctx context.Context, p openPullRequestParams) (string, error) {
-	// Title is required for PRs. Generate  one if it's omitted.
+	// Title is required for PRs. Generate one if it's omitted.
 	if p.title == "" {
 		p.title = "Merge " + p.head
 	}

@@ -18,8 +18,8 @@ var _ sshKeyer = &sshKeyerMock{}
 //
 //         // make and configure a mocked sshKeyer
 //         mockedsshKeyer := &sshKeyerMock{
-//             closeFunc: func(ctx context.Context) []error {
-// 	               panic("mock out the close method")
+//             CloseFunc: func(ctx context.Context)  {
+// 	               panic("mock out the Close method")
 //             },
 //             privateKeyPathFunc: func() string {
 // 	               panic("mock out the privateKeyPath method")
@@ -31,16 +31,16 @@ var _ sshKeyer = &sshKeyerMock{}
 //
 //     }
 type sshKeyerMock struct {
-	// closeFunc mocks the close method.
-	closeFunc func(ctx context.Context) []error
+	// CloseFunc mocks the Close method.
+	CloseFunc func(ctx context.Context)
 
 	// privateKeyPathFunc mocks the privateKeyPath method.
 	privateKeyPathFunc func() string
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// close holds details about calls to the close method.
-		close []struct {
+		// Close holds details about calls to the Close method.
+		Close []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 		}
@@ -48,38 +48,38 @@ type sshKeyerMock struct {
 		privateKeyPath []struct {
 		}
 	}
-	lockclose          sync.RWMutex
+	lockClose          sync.RWMutex
 	lockprivateKeyPath sync.RWMutex
 }
 
-// close calls closeFunc.
-func (mock *sshKeyerMock) close(ctx context.Context) []error {
-	if mock.closeFunc == nil {
-		panic("sshKeyerMock.closeFunc: method is nil but sshKeyer.close was just called")
+// Close calls CloseFunc.
+func (mock *sshKeyerMock) Close(ctx context.Context) {
+	if mock.CloseFunc == nil {
+		panic("sshKeyerMock.CloseFunc: method is nil but sshKeyer.Close was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
 	}{
 		Ctx: ctx,
 	}
-	mock.lockclose.Lock()
-	mock.calls.close = append(mock.calls.close, callInfo)
-	mock.lockclose.Unlock()
-	return mock.closeFunc(ctx)
+	mock.lockClose.Lock()
+	mock.calls.Close = append(mock.calls.Close, callInfo)
+	mock.lockClose.Unlock()
+	mock.CloseFunc(ctx)
 }
 
-// closeCalls gets all the calls that were made to close.
+// CloseCalls gets all the calls that were made to Close.
 // Check the length with:
-//     len(mockedsshKeyer.closeCalls())
-func (mock *sshKeyerMock) closeCalls() []struct {
+//     len(mockedsshKeyer.CloseCalls())
+func (mock *sshKeyerMock) CloseCalls() []struct {
 	Ctx context.Context
 } {
 	var calls []struct {
 		Ctx context.Context
 	}
-	mock.lockclose.RLock()
-	calls = mock.calls.close
-	mock.lockclose.RUnlock()
+	mock.lockClose.RLock()
+	calls = mock.calls.Close
+	mock.lockClose.RUnlock()
 	return calls
 }
 

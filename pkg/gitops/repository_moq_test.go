@@ -18,7 +18,7 @@ var _ repositorier = &repositorierMock{}
 //
 //         // make and configure a mocked repositorier
 //         mockedrepositorier := &repositorierMock{
-//             CloseFunc: func(ctx context.Context) []error {
+//             CloseFunc: func(ctx context.Context)  {
 // 	               panic("mock out the Close method")
 //             },
 //             gitCheckoutNewBranchFunc: func() error {
@@ -47,7 +47,7 @@ var _ repositorier = &repositorierMock{}
 //     }
 type repositorierMock struct {
 	// CloseFunc mocks the Close method.
-	CloseFunc func(ctx context.Context) []error
+	CloseFunc func(ctx context.Context)
 
 	// gitCheckoutNewBranchFunc mocks the gitCheckoutNewBranch method.
 	gitCheckoutNewBranchFunc func() error
@@ -111,7 +111,7 @@ type repositorierMock struct {
 }
 
 // Close calls CloseFunc.
-func (mock *repositorierMock) Close(ctx context.Context) []error {
+func (mock *repositorierMock) Close(ctx context.Context) {
 	if mock.CloseFunc == nil {
 		panic("repositorierMock.CloseFunc: method is nil but repositorier.Close was just called")
 	}
@@ -123,7 +123,7 @@ func (mock *repositorierMock) Close(ctx context.Context) []error {
 	mock.lockClose.Lock()
 	mock.calls.Close = append(mock.calls.Close, callInfo)
 	mock.lockClose.Unlock()
-	return mock.CloseFunc(ctx)
+	mock.CloseFunc(ctx)
 }
 
 // CloseCalls gets all the calls that were made to Close.

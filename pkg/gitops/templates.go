@@ -20,8 +20,8 @@ var _ sshKeyer = (*sshKey)(nil)
 type TemplatesRenderer struct {
 	// Source folder of templates.
 	SourceFolder string
-	// Variables to substitute into the templates.
-	Vars map[string]string
+	// Values to substitute into the templates.
+	Values map[string]string
 	// Destination repository for rendered files.
 	DestinationRepo repositorier
 	// Destination folder inside the repository for rendered files.
@@ -36,7 +36,7 @@ func (tr TemplatesRenderer) renderAllFiles() error {
 	}
 
 	// Render templates one-by-one to the destinaton folder
-	// (substituting variables given).
+	// (substituting values given).
 	for _, file := range files {
 		if err := tr.renderFile(file.Name()); err != nil {
 			return fmt.Errorf("render file %q: %w", file.Name(), err)
@@ -58,11 +58,11 @@ func (tr TemplatesRenderer) renderFile(fileName string) error {
 		tr.DestinationRepo.localPath(), tr.DestinationFolder, fileName)
 	f, err := os.Create(destinationFilePath)
 	if err != nil {
-		return fmt.Errorf("create destionation file: %w", err)
+		return fmt.Errorf("create destination file: %w", err)
 	}
 
 	// Render the template to the previously created file.
-	if err := t.Option("missingkey=error").Execute(f, tr.Vars); err != nil {
+	if err := t.Option("missingkey=error").Execute(f, tr.Values); err != nil {
 		return fmt.Errorf("execute template %q: %w", sourceFilePath, err)
 	}
 	return nil

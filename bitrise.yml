@@ -5,15 +5,43 @@ app:
   envs:
   - DEPLOY_REPO_URL: $DEPLOY_REPO_URL
   - VAR_REPOSITORY: $VAR_REPOSITORY
-  # Define it (DEPLOY_PAT) in .bitrise.secrets.yml
-  - DEPLOY_PAT: $DEPLOY_PAT
+  # Define it (DEPLOY_TOKEN) in .bitrise.secrets.yml
+  - DEPLOY_TOKEN: $DEPLOY_TOKEN
   # If you want to share this step into a StepLib
   - BITRISE_STEP_ID: update-gitops-repository
   - BITRISE_STEP_VERSION: "0.0.1"
   - BITRISE_STEP_GIT_CLONE_URL: https://github.com/bitrise-io/bitrise-step-update-gitops-repository.git
   - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
+  - GOLANGCI_INSTALL_URL: https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh
+  - GOLANGCI_LINT_VERSION: "v1.35.2"
+
+trigger_map:
+- pull_request_target_branch: master
+  pull_request_source_branch: "*"
+  workflow: primary
+- push_branch: master
+  workflow: primary
 
 workflows:
+  primary:
+    before_run:
+    - _install_fixed_go_version
+    - _install_golangci_lint
+    steps:
+    - activate-ssh-key@4: {}
+    - git-clone@4: {}
+    - script:
+        title: Run unit tests
+        inputs:
+        - content: |
+            #!/bin/bash
+            GO111MODULE=on go test -mod=vendor -v -cover -race ./...
+    - script:
+        title: Lint code
+        inputs:
+        - content: |
+            #!/bin/bash
+            golangci-lint run ./...
   test:
     steps:
     - path::./:
@@ -23,7 +51,7 @@ workflows:
         - deploy_path: sample
         - templates_folder_path: e2e/deployments/helm
         - pull_request: true
-        - vars:
+        - values:
             repository: $VAR_REPOSITORY
             tag: test-tag
             appVersion: 1.2.3
@@ -32,6 +60,27 @@ workflows:
         - content: |
             #!/bin/bash
             echo "My Pull Request URL: $PR_URL"
+
+  _install_fixed_go_version:
+    description: Install the 1.15.5 version of go
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -euo pipefail
+            rm -rf /usr/local/go
+            wget https://dl.google.com/go/go1.15.5.linux-amd64.tar.gz \
+              && tar -C /usr/local -xzf go1.15.5.linux-amd64.tar.gz
+  _install_golangci_lint:
+    description: Install golangci-lint
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/bash
+            curl -sSfL ${GOLANGCI_INSTALL_URL} \
+              | sh -s -- -b $(go env GOPATH)/bin ${GOLANGCI_LINT_VERSION}
 
   # ----------------------------------------------------------------
   # --- workflows to Share this step into a Step Library

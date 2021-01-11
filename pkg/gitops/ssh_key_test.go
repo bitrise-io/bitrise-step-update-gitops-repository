@@ -30,27 +30,31 @@ func TestSSHKey(t *testing.T) {
 		},
 	}
 
-	// Create new SSH key.
 	sshKey, err := NewSSHKey(ctx, gh)
-	require.NoError(t, err, "newSSHKey")
+	t.Run("create new SSH key", func(t *testing.T) {
+		require.NoError(t, err, "newSSHKey")
+	})
 
-	// Assert local private key and Github deploy key are a valid pair.
-	privatePath := sshKey.privateKeyPath()
-	gotPrivateKeyBytes, err := ioutil.ReadFile(privatePath)
-	require.NoError(t, err, "read contents of %q", privatePath)
-	gotPrivateKey, err := ssh.ParseRawPrivateKey(gotPrivateKeyBytes)
-	require.NoError(t, err, "ssh.ParseRawPrivateKey")
-	gotRSAPrivateKey, ok := gotPrivateKey.(*rsa.PrivateKey)
-	require.True(t, ok, "gotPrivateKey.(*rsa.PrivateKey)")
+	t.Run("local private and Github deploy key are a pair", func(t *testing.T) {
+		privatePath := sshKey.privateKeyPath()
+		gotPrivateKeyBytes, err := ioutil.ReadFile(privatePath)
+		require.NoError(t, err, "read contents of %q", privatePath)
+		gotPrivateKey, err := ssh.ParseRawPrivateKey(gotPrivateKeyBytes)
+		require.NoError(t, err, "ssh.ParseRawPrivateKey")
+		gotRSAPrivateKey, ok := gotPrivateKey.(*rsa.PrivateKey)
+		require.True(t, ok, "gotPrivateKey.(*rsa.PrivateKey)")
 
-	wantPublicKey := &gotRSAPrivateKey.PublicKey
-	gotPublicKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(gotAuthorizedKey))
-	require.NoError(t, err, "ssh.ParseAuthorizedKey")
+		wantPublicKey := &gotRSAPrivateKey.PublicKey
+		gotPublicKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(gotAuthorizedKey))
+		require.NoError(t, err, "ssh.ParseAuthorizedKey")
 
-	require.EqualValues(t, wantPublicKey, gotPublicKey, "deployed key matches local private key")
+		msg := "deployed key matches local private key"
+		require.EqualValues(t, wantPublicKey, gotPublicKey, msg)
+	})
 
-	// Assert close deletes deploy key from Github.
-	assert.Equal(t, 0, deletedKeyID, "should not be deleted before close call")
-	sshKey.close(ctx)
-	assert.Equal(t, wantGithubKeyID, deletedKeyID, "deleted key ID")
+	t.Run("close deletes deploy key from Github", func(t *testing.T) {
+		assert.Equal(t, 0, deletedKeyID, "should not be deleted before close")
+		sshKey.Close(ctx)
+		assert.Equal(t, wantGithubKeyID, deletedKeyID, "deleted key ID")
+	})
 }

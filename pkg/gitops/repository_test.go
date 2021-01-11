@@ -52,13 +52,11 @@ func TestRepository(t *testing.T) {
 				privateKeyPathFunc: func() string {
 					return ""
 				},
-				closeFunc: func(ctx context.Context) []error {
+				CloseFunc: func(ctx context.Context) {
 					gotKeyClosed = true
-					return nil
 				},
 			}
 
-			// Create new local repository clone.
 			repo, err := NewRepository(ctx, NewRepositoryParams{
 				Github: gh,
 				SSHKey: sshKey,
@@ -67,50 +65,59 @@ func TestRepository(t *testing.T) {
 					Branch: tc.upstreamBranch,
 				},
 			})
-			require.NoError(t, err, "newRepository")
+			t.Run("create new local repository clone", func(t *testing.T) {
+				require.NoError(t, err, "newRepository")
+			})
 
-			// The repository is clean if there weren't any changes.
-			clean, err := repo.workingDirectoryClean()
-			require.True(t, clean, "working directory is clean without changes")
+			t.Run("repository is clean without changes", func(t *testing.T) {
+				clean, err := repo.workingDirectoryClean()
+				require.NoError(t, err)
+				require.True(t, clean)
+			})
 
-			// It's dirty after making some changes.
-			changePath := path.Join(repo.localPath(), "empty.go")
-			write(t, changePath, "package empty")
+			t.Run("repository is dirty after changes", func(t *testing.T) {
+				changePath := path.Join(repo.localPath(), "empty.go")
+				write(t, changePath, "package empty")
 
-			clean, err = repo.workingDirectoryClean()
-			require.False(t, clean, "working directory is dirty after changes")
+				clean, err := repo.workingDirectoryClean()
+				require.NoError(t, err)
+				require.False(t, clean)
+			})
 
-			// Commit and push changes to upstream repository.
-			err = repo.gitCommitAndPush("test commit")
-			require.NoError(t, err, "commit and push test")
+			t.Run("commit and push changes to upstream", func(t *testing.T) {
+				err := repo.gitCommitAndPush("test commit")
+				require.NoError(t, err, "commit and push")
 
-			clean, err = repo.workingDirectoryClean()
-			require.True(t, clean, "working directory is clean after commit")
+				clean, err := repo.workingDirectoryClean()
+				require.NoError(t, err, "working directory clean")
+				require.True(t, clean)
+			})
 
-			// Can create a new branch and push it to upstream as well,
-			// open new pull request from it to the base branch.
-			require.NoError(t, repo.gitCheckoutNewBranch(), "new branch")
-			changePath = path.Join(repo.localPath(), "another.go")
-			write(t, changePath, "package another")
+			t.Run("open pull request from a new branch", func(t *testing.T) {
+				require.NoError(t, repo.gitCheckoutNewBranch(), "new branch")
+				changePath := path.Join(repo.localPath(), "another.go")
+				write(t, changePath, "package another")
 
-			err = repo.gitCommitAndPush("another commit")
-			require.NoError(t, err, "commit and push another")
+				err := repo.gitCommitAndPush("another commit")
+				require.NoError(t, err, "commit and push another")
 
-			gotPullRequestURL, err := repo.openPullRequest(ctx, "", "")
-			require.NoError(t, err, "open pull request")
-			assert.Equal(t, wantPullRequestURL, gotPullRequestURL, "pr url")
+				gotPullRequestURL, err := repo.openPullRequest(ctx, "", "")
+				require.NoError(t, err, "open pull request")
+				assert.Equal(t, wantPullRequestURL, gotPullRequestURL, "pr url")
 
-			assert.Equal(t, tc.upstreamBranch, gotBase, "pr base")
+				assert.Equal(t, tc.upstreamBranch, gotBase, "pr base")
 
-			assert.NotEqual(t, gotBase, gotHead, "pr head differs from base")
-			wantHead, err := repo.currentBranch()
-			require.NoError(t, err, "current branch")
-			assert.Equal(t, wantHead, gotHead, "pr head = current branch")
+				assert.NotEqual(t, gotBase, gotHead, "pr head != base")
+				wantHead, err := repo.currentBranch()
+				require.NoError(t, err, "current branch")
+				assert.Equal(t, wantHead, gotHead, "pr head = current branch")
+			})
 
-			// Assert propagation of close to ssh key as well.
-			require.False(t, gotKeyClosed, "key wasn't closed before")
-			require.Nil(t, repo.Close(ctx), "repo.Close")
-			require.True(t, gotKeyClosed, "key is closed by repo")
+			t.Run("propagation of close to ssh key", func(t *testing.T) {
+				require.False(t, gotKeyClosed, "key wasn't closed before")
+				repo.Close(ctx)
+				require.True(t, gotKeyClosed, "key is closed by repo")
+			})
 		})
 	}
 }
@@ -120,7 +127,8 @@ func localUpstreamRepo(t *testing.T, branch string) (string, func()) {
 	require.NoError(t, err, "new temp directory for local upstream")
 	readmePath := path.Join(repoPath, "README.md")
 
-	git(t, repoPath, "init", "-b", branch)
+	git(t, repoPath, "init")
+	git(t, repoPath, "checkout", "-b", branch)
 	write(t, readmePath, "A local upstream repository for testing.")
 	git(t, repoPath, "add", "--all")
 	git(t, repoPath, "commit", "-m", "initial commit")

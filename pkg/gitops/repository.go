@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -12,7 +13,7 @@ import (
 
 //go:generate moq -out repository_moq_test.go . repositorier
 type repositorier interface {
-	Close(ctx context.Context) []error
+	Close(ctx context.Context)
 	localPath() string
 	gitClone() error
 	workingDirectoryClean() (bool, error)
@@ -64,17 +65,15 @@ func NewRepository(ctx context.Context, p NewRepositoryParams) (*repository, err
 }
 
 // Close closes all related resoruces of the repository.
-func (r repository) Close(ctx context.Context) []error {
-	var errs []error
+// This is a best-effort operation, possible errors are logged as warning,
+// not returned as an actual error.
+func (r repository) Close(ctx context.Context) {
 	// Close all resources of temporary deploy key.
-	if keyErrs := r.sshKey.close(ctx); keyErrs != nil {
-		errs = append(errs, keyErrs...)
-	}
+	r.sshKey.Close(ctx)
 	// Delete temporary repository from the local filesystem.
 	if err := os.RemoveAll(r.tmpRepoPath); err != nil {
-		errs = append(errs, fmt.Errorf("remove temporary repository: %w", err))
+		log.Printf("warning: remove temporary repository: %s\n", err)
 	}
-	return errs
 }
 
 func (r repository) localPath() string {
@@ -92,7 +91,7 @@ func (r repository) workingDirectoryClean() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return strings.Contains(status, "nothing to commit, working tree clean"), nil
+	return strings.Contains(status, "nothing to commit"), nil
 }
 
 func (r repository) gitCheckoutNewBranch() error {
@@ -140,11 +139,8 @@ func (r repository) git(args ...string) (string, error) {
 	if err := os.Chdir(r.tmpRepoPath); err != nil {
 		return "", fmt.Errorf("change dir to %q: %w", r.tmpRepoPath, err)
 	}
-	// Defer a revert of the current directory to the original one.
-	defer os.Chdir(originalDir)
 
 	cmd := exec.Command("git", args...)
-
 	// Specify SSH key for git commands via environment variable.
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, fmt.Sprintf(
@@ -152,10 +148,16 @@ func (r repository) git(args ...string) (string, error) {
 		r.sshKey.privateKeyPath(),
 	))
 
-	// Run git command and returns it's combined output of stdout and stderr.
+	// Run git command and returns its combined output of stdout and stderr.
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		if errChdir := os.Chdir(originalDir); errChdir != nil {
+			err = fmt.Errorf("%w (revert to original dir: %s)", err, errChdir)
+		}
 		return "", fmt.Errorf("run command %v: %w (output: %s)", args, err, out)
+	}
+	if err := os.Chdir(originalDir); err != nil {
+		return "", fmt.Errorf("revert to original dir: %w", err)
 	}
 	return string(out), nil
 }

@@ -8,6 +8,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 
 	"golang.org/x/crypto/ssh"
@@ -16,7 +17,7 @@ import (
 //go:generate moq -out ssh_key_moq_test.go . sshKeyer
 type sshKeyer interface {
 	privateKeyPath() string
-	close(ctx context.Context) []error
+	Close(ctx context.Context)
 }
 
 // sshKey implements the sshKeyer interface.
@@ -30,7 +31,7 @@ type sshKey struct {
 }
 
 // NewSSHKey generates and returns a new SSH key pair.
-// It also uploads it's public part as a deploy key to Github.
+// It also uploads its public part as a deploy key to Github.
 // It should be closed after usage (a repository should close it).
 func NewSSHKey(ctx context.Context, gh githuber) (*sshKey, error) {
 	// Generate and write private part of RSA key to a temporary file.
@@ -73,16 +74,17 @@ func (kp sshKey) privateKeyPath() string {
 	return kp.PrivateKeyFile.Name()
 }
 
-func (kp sshKey) close(ctx context.Context) []error {
-	var errs []error
+// Close closes all related resoruces of the SSH key.
+// This is a best-effort operation, possible errors are logged as warning,
+// not returned as an actual error.
+func (kp sshKey) Close(ctx context.Context) {
 	// Delete deploy key from Github repository.
 	if err := kp.gh.DeleteKey(ctx, kp.githubKeyID); err != nil {
-		errs = append(errs, fmt.Errorf("delete github key: %w", err))
+		log.Printf("warning: delete github key: %s\n", err)
 	}
 	// Delete temporary private key file from the local filesystem.
 	path := kp.privateKeyPath()
 	if err := os.Remove(path); err != nil {
-		errs = append(errs, fmt.Errorf("remove private key (%q): %w", path, err))
+		log.Printf("warning: remove private key (%q): %s\n", path, err)
 	}
-	return errs
 }

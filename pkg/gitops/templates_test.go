@@ -59,26 +59,26 @@ dependencies:
 
 var renderAllFilesCases = map[string]struct {
 	templates map[string]string
-	vars      map[string]string
+	values    map[string]string
 	folder    string
 	wantFiles map[string]string
 	wantErr   bool
 }{
 	"only values.yaml is rendered": {
 		templates: map[string]string{"values.yaml": templateValuesYAML},
-		vars:      map[string]string{"repository": "myrepo", "tag": "mytag"},
+		values:    map[string]string{"repository": "myrepo", "tag": "mytag"},
 		folder:    "folder-with-values-yaml",
 		wantFiles: map[string]string{"values.yaml": myRenderedValuesYAML},
 	},
 	"values.yaml is rendered with other input": {
 		templates: map[string]string{"values.yaml": templateValuesYAML},
-		vars:      map[string]string{"repository": "foo", "tag": "bar"},
+		values:    map[string]string{"repository": "foo", "tag": "bar"},
 		folder:    "another-folder-with-values-yaml",
 		wantFiles: map[string]string{"values.yaml": otherRenderedValuesYAML},
 	},
 	"only Chart.yaml is rendered": {
 		templates: map[string]string{"Chart.yaml": templateChartYAML},
-		vars:      map[string]string{"appVersion": "2.4.5"},
+		values:    map[string]string{"appVersion": "2.4.5"},
 		folder:    "folder-with-chart-yaml",
 		wantFiles: map[string]string{"Chart.yaml": renderedChartYAML},
 	},
@@ -87,7 +87,7 @@ var renderAllFilesCases = map[string]struct {
 			"values.yaml": templateValuesYAML,
 			"Chart.yaml":  templateChartYAML,
 		},
-		vars: map[string]string{
+		values: map[string]string{
 			"repository": "myrepo",
 			"tag":        "mytag",
 			"appVersion": "2.4.5",
@@ -100,13 +100,13 @@ var renderAllFilesCases = map[string]struct {
 	},
 	"an unused template variable is present (it's ignored)": {
 		templates: map[string]string{"Chart.yaml": templateChartYAML},
-		vars:      map[string]string{"appVersion": "2.4.5", "un": "used"},
-		folder:    "folder-with-unused-variables",
+		values:    map[string]string{"appVersion": "2.4.5", "un": "used"},
+		folder:    "folder-with-unused-values",
 		wantFiles: map[string]string{"Chart.yaml": renderedChartYAML},
 	},
 	"a template variable is missing (error)": {
 		templates: map[string]string{"Chart.yaml": templateChartYAML},
-		vars:      map[string]string{"appVersionTypo": "2.4.5"},
+		values:    map[string]string{"appVersionTypo": "2.4.5"},
 		folder:    "wont-use-this-folder",
 		wantErr:   true,
 	},
@@ -138,7 +138,7 @@ func TestRenderAllFiles(t *testing.T) {
 			// Run TemplatesRenderer.renderAllFiles.
 			tr := TemplatesRenderer{
 				SourceFolder: templatesDir,
-				Vars:         tc.vars,
+				Values:       tc.values,
 				DestinationRepo: &repositorierMock{
 					localPathFunc: func() string {
 						return renderRepo
@@ -163,7 +163,7 @@ func TestRenderAllFiles(t *testing.T) {
 
 			var gotFileNames []string
 			gotFileInfos, err := ioutil.ReadDir(renderDir)
-			require.NoError(t, gotErr, "read files of render dir")
+			require.NoError(t, err, "read files of render dir")
 			for _, v := range gotFileInfos {
 				gotFileNames = append(gotFileNames, v.Name())
 			}

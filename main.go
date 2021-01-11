@@ -26,7 +26,7 @@ func run() error {
 	}
 
 	// Create Github client.
-	gh, err := gitops.NewGithub(ctx, cfg.DeployRepositoryURL, cfg.DeployPAT)
+	gh, err := gitops.NewGithub(ctx, cfg.DeployRepositoryURL, cfg.DeployToken)
 	if err != nil {
 		return fmt.Errorf("new github client: %w", err)
 	}
@@ -46,21 +46,16 @@ func run() error {
 			Branch: cfg.DeployBranch,
 		},
 	})
-	defer func() {
-		if errs := repo.Close(ctx); errs != nil {
-			for _, err := range errs {
-				log.Printf("warning: close repo resource: %s\n", err)
-			}
-		}
-	}()
 	if err != nil {
+		sshKey.Close(ctx) // repo initialization failed, it cannot close it
 		return fmt.Errorf("new repository: %w", err)
 	}
+	defer repo.Close(ctx)
 
 	// Create templates renderer.
 	renderer := gitops.TemplatesRenderer{
 		SourceFolder:      cfg.TemplatesFolder,
-		Vars:              cfg.Vars,
+		Values:            cfg.Values,
 		DestinationRepo:   repo,
 		DestinationFolder: cfg.DeployFolder,
 	}

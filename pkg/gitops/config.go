@@ -20,14 +20,14 @@ type config struct {
 	PullRequestTitle string `env:"pull_request_title"`
 	// PullRequestBody is the body of the opened pull request.
 	PullRequestBody string `env:"pull_request_body"`
-	// RawVars are unparsed version of `Vars` field (to-be-parsed manually).
-	RawVars string `env:"vars"`
-	// Vars are variables applied to the template files.
-	Vars map[string]string
+	// RawValues are unparsed version of `Values` field (to-be-parsed manually).
+	RawValues string `env:"values"`
+	// Values are values applied to the template files.
+	Values map[string]string
 	// TemplatesFolder is the path to the deployment templates folder.
 	TemplatesFolder string `env:"templates_folder_path,dir"`
-	// DeployPAT is the Personal Access Token to interact with Github API.
-	DeployPAT stepconf.Secret `env:"deploy_pat,required"`
+	// DeployToken is the Personal Access Token to interact with Github API.
+	DeployToken stepconf.Secret `env:"deploy_token,required"`
 	// CommitMessage is the created commit's message.
 	CommitMessage string `env:"commit_message,required"`
 }
@@ -38,7 +38,7 @@ func NewConfig() (config, error) {
 	if err := stepconf.Parse(&cfg); err != nil {
 		return config{}, fmt.Errorf("parse step config: %w", err)
 	}
-	cfg.Vars = parseMap(cfg.RawVars)
+	cfg.Values = parseMap(cfg.RawValues)
 	return cfg, nil
 }
 
