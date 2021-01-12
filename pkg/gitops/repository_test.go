@@ -38,7 +38,7 @@ func TestRepository(t *testing.T) {
 			// Initialize mock Github client.
 			wantPullRequestURL := fmt.Sprintf("https://%s/pr/15", tc.repoURL)
 			var gotHead, gotBase string
-			gh := &githuberMock{
+			gh := &gitProviderMock{
 				OpenPullRequestFunc: func(_ context.Context, p openPullRequestParams) (string, error) {
 					gotHead = p.head
 					gotBase = p.base

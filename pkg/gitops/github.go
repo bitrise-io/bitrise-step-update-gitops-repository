@@ -10,15 +10,15 @@ import (
 	"golang.org/x/oauth2"
 )
 
-//go:generate moq -out github_moq_test.go . githuber
-type githuber interface {
+//go:generate moq -out github_moq_test.go . gitProvider
+type gitProvider interface {
 	AddKey(context.Context, []byte) (int64, error)
 	DeleteKey(context.Context, int64) error
 	OpenPullRequest(context.Context, openPullRequestParams) (string, error)
 }
 
-// github implements the githuber interface.
-var _ githuber = (*github)(nil)
+// github implements the gitProvider interface.
+var _ gitProvider = (*github)(nil)
 
 type github struct {
 	client   *gogh.Client

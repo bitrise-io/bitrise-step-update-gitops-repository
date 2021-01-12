@@ -19,7 +19,7 @@ func TestSSHKey(t *testing.T) {
 	// Initialize mock Github client.
 	var gotAuthorizedKey string
 	var deletedKeyID int
-	gh := &githuberMock{
+	gh := &gitProviderMock{
 		AddKeyFunc: func(_ context.Context, pub []byte) (int64, error) {
 			gotAuthorizedKey = string(pub)
 			return int64(wantGithubKeyID), nil

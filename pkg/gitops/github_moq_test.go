@@ -8,16 +8,16 @@ import (
 	"sync"
 )
 
-// Ensure, that githuberMock does implement githuber.
+// Ensure, that gitProviderMock does implement gitProvider.
 // If this is not the case, regenerate this file with moq.
-var _ githuber = &githuberMock{}
+var _ gitProvider = &gitProviderMock{}
 
-// githuberMock is a mock implementation of githuber.
+// gitProviderMock is a mock implementation of gitProvider.
 //
-//     func TestSomethingThatUsesgithuber(t *testing.T) {
+//     func TestSomethingThatUsesgitProvider(t *testing.T) {
 //
-//         // make and configure a mocked githuber
-//         mockedgithuber := &githuberMock{
+//         // make and configure a mocked gitProvider
+//         mockedgitProvider := &gitProviderMock{
 //             AddKeyFunc: func(in1 context.Context, in2 []byte) (int64, error) {
 // 	               panic("mock out the AddKey method")
 //             },
@@ -29,11 +29,11 @@ var _ githuber = &githuberMock{}
 //             },
 //         }
 //
-//         // use mockedgithuber in code that requires githuber
+//         // use mockedgitProvider in code that requires gitProvider
 //         // and then make assertions.
 //
 //     }
-type githuberMock struct {
+type gitProviderMock struct {
 	// AddKeyFunc mocks the AddKey method.
 	AddKeyFunc func(in1 context.Context, in2 []byte) (int64, error)
 
@@ -73,9 +73,9 @@ type githuberMock struct {
 }
 
 // AddKey calls AddKeyFunc.
-func (mock *githuberMock) AddKey(in1 context.Context, in2 []byte) (int64, error) {
+func (mock *gitProviderMock) AddKey(in1 context.Context, in2 []byte) (int64, error) {
 	if mock.AddKeyFunc == nil {
-		panic("githuberMock.AddKeyFunc: method is nil but githuber.AddKey was just called")
+		panic("gitProviderMock.AddKeyFunc: method is nil but gitProvider.AddKey was just called")
 	}
 	callInfo := struct {
 		In1 context.Context
@@ -92,8 +92,8 @@ func (mock *githuberMock) AddKey(in1 context.Context, in2 []byte) (int64, error)
 
 // AddKeyCalls gets all the calls that were made to AddKey.
 // Check the length with:
-//     len(mockedgithuber.AddKeyCalls())
-func (mock *githuberMock) AddKeyCalls() []struct {
+//     len(mockedgitProvider.AddKeyCalls())
+func (mock *gitProviderMock) AddKeyCalls() []struct {
 	In1 context.Context
 	In2 []byte
 } {
@@ -108,9 +108,9 @@ func (mock *githuberMock) AddKeyCalls() []struct {
 }
 
 // DeleteKey calls DeleteKeyFunc.
-func (mock *githuberMock) DeleteKey(in1 context.Context, in2 int64) error {
+func (mock *gitProviderMock) DeleteKey(in1 context.Context, in2 int64) error {
 	if mock.DeleteKeyFunc == nil {
-		panic("githuberMock.DeleteKeyFunc: method is nil but githuber.DeleteKey was just called")
+		panic("gitProviderMock.DeleteKeyFunc: method is nil but gitProvider.DeleteKey was just called")
 	}
 	callInfo := struct {
 		In1 context.Context
@@ -127,8 +127,8 @@ func (mock *githuberMock) DeleteKey(in1 context.Context, in2 int64) error {
 
 // DeleteKeyCalls gets all the calls that were made to DeleteKey.
 // Check the length with:
-//     len(mockedgithuber.DeleteKeyCalls())
-func (mock *githuberMock) DeleteKeyCalls() []struct {
+//     len(mockedgitProvider.DeleteKeyCalls())
+func (mock *gitProviderMock) DeleteKeyCalls() []struct {
 	In1 context.Context
 	In2 int64
 } {
@@ -143,9 +143,9 @@ func (mock *githuberMock) DeleteKeyCalls() []struct {
 }
 
 // OpenPullRequest calls OpenPullRequestFunc.
-func (mock *githuberMock) OpenPullRequest(in1 context.Context, in2 openPullRequestParams) (string, error) {
+func (mock *gitProviderMock) OpenPullRequest(in1 context.Context, in2 openPullRequestParams) (string, error) {
 	if mock.OpenPullRequestFunc == nil {
-		panic("githuberMock.OpenPullRequestFunc: method is nil but githuber.OpenPullRequest was just called")
+		panic("gitProviderMock.OpenPullRequestFunc: method is nil but gitProvider.OpenPullRequest was just called")
 	}
 	callInfo := struct {
 		In1 context.Context
@@ -162,8 +162,8 @@ func (mock *githuberMock) OpenPullRequest(in1 context.Context, in2 openPullReque
 
 // OpenPullRequestCalls gets all the calls that were made to OpenPullRequest.
 // Check the length with:
-//     len(mockedgithuber.OpenPullRequestCalls())
-func (mock *githuberMock) OpenPullRequestCalls() []struct {
+//     len(mockedgitProvider.OpenPullRequestCalls())
+func (mock *gitProviderMock) OpenPullRequestCalls() []struct {
 	In1 context.Context
 	In2 openPullRequestParams
 } {

@@ -26,14 +26,14 @@ var _ sshKeyer = (*sshKey)(nil)
 type sshKey struct {
 	PrivateKeyFile *os.File
 
-	gh          githuber
+	gh          gitProvider
 	githubKeyID int64
 }
 
 // NewSSHKey generates and returns a new SSH key pair.
 // It also uploads its public part as a deploy key to Github.
 // It should be closed after usage (a repository should close it).
-func NewSSHKey(ctx context.Context, gh githuber) (*sshKey, error) {
+func NewSSHKey(ctx context.Context, gh gitProvider) (*sshKey, error) {
 	// Generate and write private part of RSA key to a temporary file.
 	privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {

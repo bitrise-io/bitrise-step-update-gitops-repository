@@ -135,8 +135,8 @@ func TestRenderAllFiles(t *testing.T) {
 				require.NoError(t, err, "write template %q", fileName)
 			}
 
-			// Run TemplatesRenderer.renderAllFiles.
-			tr := TemplatesRenderer{
+			// Run Templates.renderAllFiles.
+			tr := Templates{
 				SourceFolder: templatesDir,
 				Values:       tc.values,
 				DestinationRepo: &repositorierMock{

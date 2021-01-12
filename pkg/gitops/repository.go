@@ -26,7 +26,7 @@ type repositorier interface {
 var _ repositorier = (*repository)(nil)
 
 type repository struct {
-	gh          githuber
+	gh          gitProvider
 	remote      RemoteConfig
 	sshKey      sshKeyer
 	tmpRepoPath string
@@ -39,7 +39,7 @@ type RemoteConfig struct {
 
 // NewRepositoryParams are parameters for NewRepository function.
 type NewRepositoryParams struct {
-	Github githuber
+	Github gitProvider
 	SSHKey sshKeyer
 	Remote RemoteConfig
 }

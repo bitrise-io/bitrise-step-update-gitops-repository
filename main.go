@@ -53,7 +53,7 @@ func run() error {
 	defer repo.Close(ctx)
 
 	// Create templates renderer.
-	renderer := gitops.TemplatesRenderer{
+	renderer := gitops.Templates{
 		SourceFolder:      cfg.TemplatesFolder,
 		Values:            cfg.Values,
 		DestinationRepo:   repo,
@@ -61,10 +61,12 @@ func run() error {
 	}
 
 	// Update files of gitops repository.
-	if err := gitops.UpdateFiles(ctx, gitops.UpdateFilesParams{
-		Repo:             repo,
-		ExportEnv:        gitops.EnvmanExport,
-		Renderer:         renderer,
+	i := gitops.Integration{
+		Repo:      repo,
+		ExportEnv: gitops.EnvmanExport,
+		Renderer:  renderer,
+	}
+	if err := i.UpdateFiles(ctx, gitops.UpdateFilesParams{
 		PullRequest:      cfg.PullRequest,
 		PullRequestTitle: cfg.PullRequestTitle,
 		PullRequestBody:  cfg.PullRequestBody,

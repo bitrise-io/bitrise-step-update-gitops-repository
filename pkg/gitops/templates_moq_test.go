@@ -7,26 +7,26 @@ import (
 	"sync"
 )
 
-// Ensure, that renderAllFileserMock does implement renderAllFileser.
+// Ensure, that allFilesRendererMock does implement allFilesRenderer.
 // If this is not the case, regenerate this file with moq.
-var _ renderAllFileser = &renderAllFileserMock{}
+var _ allFilesRenderer = &allFilesRendererMock{}
 
-// renderAllFileserMock is a mock implementation of renderAllFileser.
+// allFilesRendererMock is a mock implementation of allFilesRenderer.
 //
-//     func TestSomethingThatUsesrenderAllFileser(t *testing.T) {
+//     func TestSomethingThatUsesallFilesRenderer(t *testing.T) {
 //
-//         // make and configure a mocked renderAllFileser
-//         mockedrenderAllFileser := &renderAllFileserMock{
+//         // make and configure a mocked allFilesRenderer
+//         mockedallFilesRenderer := &allFilesRendererMock{
 //             renderAllFilesFunc: func() error {
 // 	               panic("mock out the renderAllFiles method")
 //             },
 //         }
 //
-//         // use mockedrenderAllFileser in code that requires renderAllFileser
+//         // use mockedallFilesRenderer in code that requires allFilesRenderer
 //         // and then make assertions.
 //
 //     }
-type renderAllFileserMock struct {
+type allFilesRendererMock struct {
 	// renderAllFilesFunc mocks the renderAllFiles method.
 	renderAllFilesFunc func() error
 
@@ -40,9 +40,9 @@ type renderAllFileserMock struct {
 }
 
 // renderAllFiles calls renderAllFilesFunc.
-func (mock *renderAllFileserMock) renderAllFiles() error {
+func (mock *allFilesRendererMock) renderAllFiles() error {
 	if mock.renderAllFilesFunc == nil {
-		panic("renderAllFileserMock.renderAllFilesFunc: method is nil but renderAllFileser.renderAllFiles was just called")
+		panic("allFilesRendererMock.renderAllFilesFunc: method is nil but allFilesRenderer.renderAllFiles was just called")
 	}
 	callInfo := struct {
 	}{}
@@ -54,8 +54,8 @@ func (mock *renderAllFileserMock) renderAllFiles() error {
 
 // renderAllFilesCalls gets all the calls that were made to renderAllFiles.
 // Check the length with:
-//     len(mockedrenderAllFileser.renderAllFilesCalls())
-func (mock *renderAllFileserMock) renderAllFilesCalls() []struct {
+//     len(mockedallFilesRenderer.renderAllFilesCalls())
+func (mock *allFilesRendererMock) renderAllFilesCalls() []struct {
 } {
 	var calls []struct {
 	}

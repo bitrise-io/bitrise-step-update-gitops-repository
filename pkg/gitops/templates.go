@@ -8,16 +8,16 @@ import (
 	"path/filepath"
 )
 
-//go:generate moq -out templates_moq_test.go . renderAllFileser
-type renderAllFileser interface {
+//go:generate moq -out templates_moq_test.go . allFilesRenderer
+type allFilesRenderer interface {
 	renderAllFiles() error
 }
 
-// templatesRenderer implements the renderAllFileser interface.
+// templates implements the allFilesRenderer interface.
 var _ sshKeyer = (*sshKey)(nil)
 
-// TemplatesRenderer renders a folder of templates to a local repository.
-type TemplatesRenderer struct {
+// Templates renders a folder of templates to a local repository.
+type Templates struct {
 	// Source folder of templates.
 	SourceFolder string
 	// Values to substitute into the templates.
@@ -28,7 +28,7 @@ type TemplatesRenderer struct {
 	DestinationFolder string
 }
 
-func (tr TemplatesRenderer) renderAllFiles() error {
+func (tr Templates) renderAllFiles() error {
 	// Get all template file names from the source folder.
 	files, err := ioutil.ReadDir(tr.SourceFolder)
 	if err != nil {
@@ -45,7 +45,7 @@ func (tr TemplatesRenderer) renderAllFiles() error {
 	return nil
 }
 
-func (tr TemplatesRenderer) renderFile(fileName string) error {
+func (tr Templates) renderFile(fileName string) error {
 	// Parse template.
 	sourceFilePath := filepath.Join(tr.SourceFolder, fileName)
 	t, err := template.ParseFiles(sourceFilePath)

@@ -65,19 +65,21 @@ func TestUpdateFiles(t *testing.T) {
 			}
 			// Mock of templates renderer.
 			var gotFilesRendered bool
-			renderer := &renderAllFileserMock{
+			renderer := &allFilesRendererMock{
 				renderAllFilesFunc: func() error {
 					gotFilesRendered = true
 					return nil
 				},
 			}
 
-			ctx := context.Background()
-			err := UpdateFiles(ctx, UpdateFilesParams{
+			i := Integration{
 				Repo:      repo,
 				ExportEnv: exportEnv,
 				Renderer:  renderer,
+			}
 
+			ctx := context.Background()
+			err := i.UpdateFiles(ctx, UpdateFilesParams{
 				PullRequest:      tc.pullRequest,
 				PullRequestTitle: tc.pullRequestTitle,
 				PullRequestBody:  tc.pullRequestBody,
