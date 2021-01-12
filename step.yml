@@ -1,0 +1,89 @@
+title: Update GitOps repository
+summary: |
+  Updates files of a GitOps repository either by pushing changes directly to a
+  given folder of a given branch or by opening a pull request to it.
+description: |
+  Updates files of a GitOps repository either by pushing changes directly to a
+  given folder of a given branch or by opening a pull request to it.
+  URL of the pull request is exposed as an output in the latter case.
+  Updated files are go templates rendered by substituting given values.
+  A Github Personal Access Token must be provided with access to the repository.
+  A temporary SSH key will automatically be added to the repository to push
+  changes. It will also be automatically deleted once the step terminated.
+website: https://github.com/bitrise-io/bitrise-step-update-gitops-repository
+source_code_url: https://github.com/bitrise-io/bitrise-step-update-gitops-repository
+support_url: https://github.com/bitrise-io/bitrise-step-update-gitops-repository/issues
+host_os_tags:
+- osx-10.10
+- ubuntu-16.04
+type_tags:
+- deploy
+
+is_requires_admin_user: false
+is_always_run: false
+is_skippable: false
+run_if: ""
+
+deps:
+  brew:
+  - name: git
+  apt_get:
+  - name: git
+
+toolkit:
+  go:
+    package_name: github.com/bitrise-io/bitrise-step-update-gitops-repository
+
+inputs:
+- deploy_repository_url: ""
+  opts:
+    title: Github SSH URL of the repository to deploy to
+    is_required: true
+- deploy_path: ""
+  opts:
+    title: Path to place rendered templates inside the repository
+    is_required: true
+- deploy_token: $DEPLOY_TOKEN
+  opts:
+    title: Personal Access Token to interact with Github API
+    is_sensitive: true
+    is_required: true
+- deploy_branch: "master"
+  opts:
+    title: Branch of the repository to deploy to
+- commit_message: bitrise ci integration
+  opts:
+    title: Commit message of pushed changes
+- templates_folder_path: deployments/helm
+  opts:
+    title: Path to Go templates folder
+    category: Templates
+- values: {}
+  opts:
+    title: Input values for the Go template files
+    category: Templates
+- pull_request: false
+  opts:
+    title: Open a pull request
+    category: Pull Request
+    description: |
+      Open a pull request instead of pushing
+      changes directly to the given branch.
+    value_options:
+    - true
+    - false
+- pull_request_title: ""
+  opts:
+    title: Title of the opened pull request
+    category: Pull Request
+- pull_request_body: ""
+  opts:
+    title: Body of the opened pull request
+    category: Pull Request
+
+outputs:
+- PR_URL:
+  opts:
+    title: URL of opened pull request
+    description: |
+      URL of opened pull request. Will be emitted in pull request mode.
