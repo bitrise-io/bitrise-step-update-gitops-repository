@@ -58,9 +58,10 @@ inputs:
   opts:
     title: Path to Go templates folder
     category: Templates
-- values: {}
+- values: null
   opts:
     title: Input values for the Go template files
+    description: Input values for the Go template files as key-value pairs.
     category: Templates
 - pull_request: false
   opts:
