@@ -71,8 +71,8 @@ inputs:
       Open a pull request instead of pushing
       changes directly to the given branch.
     value_options:
-    - true
-    - false
+    - "true"
+    - "false"
 - pull_request_title: ""
   opts:
     title: Title of the opened pull request

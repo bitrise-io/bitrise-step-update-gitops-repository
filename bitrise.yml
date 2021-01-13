@@ -9,7 +9,7 @@ app:
   - DEPLOY_TOKEN: $DEPLOY_TOKEN
   # If you want to share this step into a StepLib
   - BITRISE_STEP_ID: update-gitops-repository
-  - BITRISE_STEP_VERSION: "0.1.1"
+  - BITRISE_STEP_VERSION: "0.1.2"
   - BITRISE_STEP_GIT_CLONE_URL: https://github.com/bitrise-io/bitrise-step-update-gitops-repository.git
   - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
   - GOLANGCI_INSTALL_URL: https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh
