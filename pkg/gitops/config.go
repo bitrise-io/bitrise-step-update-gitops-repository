@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/bitrise-io/go-steputils/stepconf"
+	"gopkg.in/yaml.v2"
 )
 
 type config struct {
@@ -38,10 +39,11 @@ func NewConfig() (config, error) {
 	if err := stepconf.Parse(&cfg); err != nil {
 		return config{}, fmt.Errorf("parse step config: %w", err)
 	}
-	cfg.Values = parseMap(cfg.RawValues)
-	return cfg, nil
+
+	return cfg, yaml.Unmarshal([]byte(cfg.RawValues), &cfg.Values)
 }
 
+// TODO: remove this below
 // parseMap returns a deserialized map[string]string from a given string.
 // Assumption: keys don't contain spaces, values can.
 // (it cannot be confidently deserialized if we allow both)
