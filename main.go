@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/bitrise-io/bitrise-step-update-gitops-repository/pkg/gitops"
+	"github.com/bitrise-io/go-steputils/stepconf"
 )
 
 func main() {
@@ -24,6 +25,7 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("new gitops config: %w", err)
 	}
+	stepconf.Print(cfg)
 
 	// Create Github client.
 	gh, err := gitops.NewGithub(ctx, cfg.DeployRepositoryURL, cfg.DeployToken)

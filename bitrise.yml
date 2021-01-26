@@ -51,7 +51,7 @@ workflows:
         - deploy_path: sample
         - templates_folder_path: e2e/deployments/helm
         - pull_request: true
-        - values:
+        - values: |
             repository: $VAR_REPOSITORY
             tag: test-tag
             appVersion: 1.2.3
