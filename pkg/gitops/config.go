@@ -2,7 +2,6 @@ package gitops
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"gopkg.in/yaml.v2"
@@ -41,42 +40,4 @@ func NewConfig() (config, error) {
 	}
 
 	return cfg, yaml.Unmarshal([]byte(cfg.RawValues), &cfg.Values)
-}
-
-// TODO: remove this below
-// parseMap returns a deserialized map[string]string from a given string.
-// Assumption: keys don't contain spaces, values can.
-// (it cannot be confidently deserialized if we allow both)
-func parseMap(s string) map[string]string {
-	s = strings.TrimPrefix(s, "map[")
-	s = strings.TrimSuffix(s, "]")
-
-	m := map[string]string{}
-	var key, value string
-	var b strings.Builder
-	for _, r := range s {
-		switch r {
-		case ':':
-			if key != "" {
-				m[key] = value
-			}
-			key = b.String()
-			b.Reset()
-			value = ""
-		case ' ':
-			value = appendWord(value, b.String())
-			b.Reset()
-		default:
-			b.WriteRune(r)
-		}
-	}
-	m[key] = appendWord(value, b.String())
-	return m
-}
-
-func appendWord(sentence, word string) string {
-	if sentence == "" {
-		return word
-	}
-	return sentence + " " + word
 }
