@@ -60,8 +60,16 @@ inputs:
     category: Templates
 - values: null
   opts:
-    title: Input values for the Go template files
-    description: Input values for the Go template files as key-value pairs.
+    title: Input values for the Go template files in YAML format
+    description: |-
+      Input values for the Go template files as key-value pairs in YAML format.
+
+      For example:
+
+      ```
+      my-key1: my value 1
+      my-key2: my value 2
+      ```
     category: Templates
 - pull_request: false
   opts:
