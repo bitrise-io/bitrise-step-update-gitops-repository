@@ -9,6 +9,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -46,22 +47,12 @@ func TestRepository(t *testing.T) {
 				},
 			}
 
-			// Initialize mock SSH key.
-			var gotKeyClosed bool
-			sshKey := &sshKeyerMock{
-				privateKeyPathFunc: func() string {
-					return ""
-				},
-				CloseFunc: func(ctx context.Context) {
-					gotKeyClosed = true
-				},
-			}
-
 			repo, err := NewRepository(ctx, NewRepositoryParams{
 				Github: gh,
-				SSHKey: sshKey,
 				Remote: RemoteConfig{
-					URL:    upstreamPath,
+					Repo: &githubRepo{
+						url: stepconf.Secret(upstreamPath),
+					},
 					Branch: tc.upstreamBranch,
 				},
 			})
@@ -111,12 +102,6 @@ func TestRepository(t *testing.T) {
 				wantHead, err := repo.currentBranch()
 				require.NoError(t, err, "current branch")
 				assert.Equal(t, wantHead, gotHead, "pr head = current branch")
-			})
-
-			t.Run("propagation of close to ssh key", func(t *testing.T) {
-				require.False(t, gotKeyClosed, "key wasn't closed before")
-				repo.Close(ctx)
-				require.True(t, gotKeyClosed, "key is closed by repo")
 			})
 		})
 	}

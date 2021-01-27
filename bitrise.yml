@@ -3,6 +3,7 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
+  - GITHUB_USERNAME: $GITHUB_USERNAME
   - DEPLOY_REPO_URL: $DEPLOY_REPO_URL
   - VAR_REPOSITORY: $VAR_REPOSITORY
   # Define it (DEPLOY_TOKEN) in .bitrise.secrets.yml
@@ -51,6 +52,7 @@ workflows:
         - deploy_path: sample
         - templates_folder_path: e2e/deployments/helm
         - pull_request: true
+        - deploy_user: $DEPLOY_USER
         - values: |
             repository: $VAR_REPOSITORY
             tag: test-tag

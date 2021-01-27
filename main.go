@@ -27,44 +27,43 @@ func run() error {
 	}
 	stepconf.Print(cfg)
 
+	// Create reference to Github repository.
+	ghRepo, err := gitops.NewGithubRepo(
+		cfg.DeployRepositoryURL, cfg.DeployUser, cfg.DeployToken)
+	if err != nil {
+		return fmt.Errorf("new github repository reference: %w", err)
+	}
+
 	// Create Github client.
-	gh, err := gitops.NewGithub(ctx, cfg.DeployRepositoryURL, cfg.DeployToken)
+	gh, err := gitops.NewGithub(ctx, ghRepo)
 	if err != nil {
 		return fmt.Errorf("new github client: %w", err)
 	}
 
-	// Temporary SSH key (used by git commands).
-	sshKey, err := gitops.NewSSHKey(ctx, gh)
-	if err != nil {
-		return fmt.Errorf("new temporary ssh key: %w", err)
-	}
-
 	// Create local clone of the remote repository.
-	repo, err := gitops.NewRepository(ctx, gitops.NewRepositoryParams{
+	localRepo, err := gitops.NewRepository(ctx, gitops.NewRepositoryParams{
 		Github: gh,
-		SSHKey: sshKey,
 		Remote: gitops.RemoteConfig{
-			URL:    cfg.DeployRepositoryURL,
+			Repo:   ghRepo,
 			Branch: cfg.DeployBranch,
 		},
 	})
 	if err != nil {
-		sshKey.Close(ctx) // repo initialization failed, it cannot close it
 		return fmt.Errorf("new repository: %w", err)
 	}
-	defer repo.Close(ctx)
+	defer localRepo.Close(ctx)
 
 	// Create templates renderer.
 	renderer := gitops.Templates{
 		SourceFolder:      cfg.TemplatesFolder,
 		Values:            cfg.Values,
-		DestinationRepo:   repo,
+		DestinationRepo:   localRepo,
 		DestinationFolder: cfg.DeployFolder,
 	}
 
 	// Update files of gitops repository.
 	i := gitops.Integration{
-		Repo:      repo,
+		Repo:      localRepo,
 		ExportEnv: gitops.EnvmanExport,
 		Renderer:  renderer,
 	}

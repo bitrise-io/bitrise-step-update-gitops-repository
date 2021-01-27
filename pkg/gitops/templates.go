@@ -14,7 +14,7 @@ type allFilesRenderer interface {
 }
 
 // templates implements the allFilesRenderer interface.
-var _ sshKeyer = (*sshKey)(nil)
+var _ allFilesRenderer = (*Templates)(nil)
 
 // Templates renders a folder of templates to a local repository.
 type Templates struct {

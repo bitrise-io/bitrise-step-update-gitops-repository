@@ -28,24 +28,23 @@ var _ repositorier = (*repository)(nil)
 type repository struct {
 	gh          gitProvider
 	remote      RemoteConfig
-	sshKey      sshKeyer
 	tmpRepoPath string
 }
 
 // RemoteConfig is a git remote configuration.
 type RemoteConfig struct {
-	URL, Branch, Folder string
+	Repo   *githubRepo
+	Branch string
 }
 
 // NewRepositoryParams are parameters for NewRepository function.
 type NewRepositoryParams struct {
 	Github gitProvider
-	SSHKey sshKeyer
 	Remote RemoteConfig
 }
 
 // NewRepository returns a new local clone of a remote repository.
-// It must be closed after usage and it will also close the SSH key it uses.
+// It should be closed after usage.
 func NewRepository(ctx context.Context, p NewRepositoryParams) (*repository, error) {
 	// Temporary directory for local clone of repository.
 	tmpRepoPath, err := ioutil.TempDir("", "")
@@ -55,7 +54,6 @@ func NewRepository(ctx context.Context, p NewRepositoryParams) (*repository, err
 	repo := &repository{
 		gh:          p.Github,
 		remote:      p.Remote,
-		sshKey:      p.SSHKey,
 		tmpRepoPath: tmpRepoPath,
 	}
 	if err := repo.gitClone(); err != nil {
@@ -68,8 +66,6 @@ func NewRepository(ctx context.Context, p NewRepositoryParams) (*repository, err
 // This is a best-effort operation, possible errors are logged as warning,
 // not returned as an actual error.
 func (r repository) Close(ctx context.Context) {
-	// Close all resources of temporary deploy key.
-	r.sshKey.Close(ctx)
 	// Delete temporary repository from the local filesystem.
 	if err := os.RemoveAll(r.tmpRepoPath); err != nil {
 		log.Printf("warning: remove temporary repository: %s\n", err)
@@ -82,7 +78,8 @@ func (r repository) localPath() string {
 
 func (r repository) gitClone() error {
 	_, err := r.git("clone",
-		"--branch", r.remote.Branch, "--single-branch", r.remote.URL, ".")
+		"--branch", r.remote.Branch, "--single-branch",
+		string(r.remote.Repo.url), ".")
 	return err
 }
 
@@ -141,13 +138,6 @@ func (r repository) git(args ...string) (string, error) {
 	}
 
 	cmd := exec.Command("git", args...)
-	// Specify SSH key for git commands via environment variable.
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, fmt.Sprintf(
-		"GIT_SSH_COMMAND=ssh -i %s -o IdentitiesOnly=yes",
-		r.sshKey.privateKeyPath(),
-	))
-
 	// Run git command and returns its combined output of stdout and stderr.
 	out, err := cmd.CombinedOutput()
 	if err != nil {
