@@ -3,7 +3,7 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
-  - GITHUB_USERNAME: $GITHUB_USERNAME
+  - DEPLOY_USER: $DEPLOY_USER
   - DEPLOY_REPO_URL: $DEPLOY_REPO_URL
   - VAR_REPOSITORY: $VAR_REPOSITORY
   # Define it (DEPLOY_TOKEN) in .bitrise.secrets.yml
