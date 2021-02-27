@@ -10,28 +10,28 @@ import (
 	"golang.org/x/oauth2"
 )
 
-//go:generate moq -out github_moq_test.go . gitProvider
-type gitProvider interface {
+//go:generate moq -out github_moq_test.go . pullRequestOpener
+type pullRequestOpener interface {
 	OpenPullRequest(context.Context, openPullRequestParams) (string, error)
 }
 
-// github implements the gitProvider interface.
-var _ gitProvider = (*github)(nil)
+// githubClient implements the pullRequestOpener interface.
+var _ pullRequestOpener = (*githubClient)(nil)
 
-type github struct {
+type githubClient struct {
 	client *gogh.Client
 	repo   *githubRepo
 }
 
-// NewGithub returns a new Github client to interact with a given repository.
-func NewGithub(ctx context.Context, repo *githubRepo) (*github, error) {
+// NewGithubClient returns a new Github client to interact with a given repository.
+func NewGithubClient(ctx context.Context, repo *githubRepo) (*githubClient, error) {
 	// Initialize client for Github API.
 	tokenSource := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: string(repo.token)},
 	)
 	tokenClient := oauth2.NewClient(ctx, tokenSource)
 	ghClient := gogh.NewClient(tokenClient)
-	return &github{
+	return &githubClient{
 		client: ghClient,
 		repo:   repo,
 	}, nil
@@ -44,7 +44,7 @@ type openPullRequestParams struct {
 	base  string
 }
 
-func (gh github) OpenPullRequest(ctx context.Context, p openPullRequestParams) (string, error) {
+func (gh githubClient) OpenPullRequest(ctx context.Context, p openPullRequestParams) (string, error) {
 	// Title is required for PRs. Generate one if it's omitted.
 	if p.title == "" {
 		p.title = "Merge " + p.head

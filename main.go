@@ -35,18 +35,16 @@ func run() error {
 	}
 
 	// Create Github client.
-	gh, err := gitops.NewGithub(ctx, ghRepo)
+	gh, err := gitops.NewGithubClient(ctx, ghRepo)
 	if err != nil {
 		return fmt.Errorf("new github client: %w", err)
 	}
 
 	// Create local clone of the remote repository.
-	localRepo, err := gitops.NewRepository(ctx, gitops.NewRepositoryParams{
-		Github: gh,
-		Remote: gitops.RemoteConfig{
-			Repo:   ghRepo,
-			Branch: cfg.DeployBranch,
-		},
+	localRepo, err := gitops.NewGitRepo(ctx, gitops.NewGitRepoParams{
+		PullRequestOpener: gh,
+		GithubRepo:        ghRepo,
+		Branch:            cfg.DeployBranch,
 	})
 	if err != nil {
 		return fmt.Errorf("new repository: %w", err)

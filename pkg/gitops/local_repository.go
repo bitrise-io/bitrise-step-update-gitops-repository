@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-//go:generate moq -out repository_moq_test.go . repositorier
-type repositorier interface {
+//go:generate moq -out local_repository_moq_test.go . localRepository
+type localRepository interface {
 	Close(ctx context.Context)
 	localPath() string
 	gitClone() error
@@ -22,38 +22,36 @@ type repositorier interface {
 	openPullRequest(ctx context.Context, title, body string) (string, error)
 }
 
-// repository implements the repositorier interface.
-var _ repositorier = (*repository)(nil)
+// gitRepo implements the localRepository interface.
+var _ localRepository = (*gitRepo)(nil)
 
-type repository struct {
-	gh          gitProvider
-	remote      RemoteConfig
+type gitRepo struct {
+	pr         pullRequestOpener
+	githubRepo *githubRepo
+	branch     string
+
 	tmpRepoPath string
 }
 
-// RemoteConfig is a git remote configuration.
-type RemoteConfig struct {
-	Repo   *githubRepo
-	Branch string
+// NewGitRepoParams are parameters for NewGitRepo function.
+type NewGitRepoParams struct {
+	PullRequestOpener pullRequestOpener
+	GithubRepo        *githubRepo
+	Branch            string
 }
 
-// NewRepositoryParams are parameters for NewRepository function.
-type NewRepositoryParams struct {
-	Github gitProvider
-	Remote RemoteConfig
-}
-
-// NewRepository returns a new local clone of a remote repository.
+// NewGitRepo returns a new local clone of a remote repository.
 // It should be closed after usage.
-func NewRepository(ctx context.Context, p NewRepositoryParams) (*repository, error) {
+func NewGitRepo(ctx context.Context, p NewGitRepoParams) (*gitRepo, error) {
 	// Temporary directory for local clone of repository.
 	tmpRepoPath, err := ioutil.TempDir("", "")
 	if err != nil {
 		return nil, fmt.Errorf("create temp dir for repo: %w", err)
 	}
-	repo := &repository{
-		gh:          p.Github,
-		remote:      p.Remote,
+	repo := &gitRepo{
+		pr:          p.PullRequestOpener,
+		githubRepo:  p.GithubRepo,
+		branch:      p.Branch,
 		tmpRepoPath: tmpRepoPath,
 	}
 	if err := repo.gitClone(); err != nil {
@@ -65,25 +63,25 @@ func NewRepository(ctx context.Context, p NewRepositoryParams) (*repository, err
 // Close closes all related resoruces of the repository.
 // This is a best-effort operation, possible errors are logged as warning,
 // not returned as an actual error.
-func (r repository) Close(ctx context.Context) {
+func (r gitRepo) Close(ctx context.Context) {
 	// Delete temporary repository from the local filesystem.
 	if err := os.RemoveAll(r.tmpRepoPath); err != nil {
 		log.Printf("warning: remove temporary repository: %s\n", err)
 	}
 }
 
-func (r repository) localPath() string {
+func (r gitRepo) localPath() string {
 	return r.tmpRepoPath
 }
 
-func (r repository) gitClone() error {
+func (r gitRepo) gitClone() error {
 	_, err := r.git("clone",
-		"--branch", r.remote.Branch, "--single-branch",
-		string(r.remote.Repo.url), ".")
+		"--branch", r.branch, "--single-branch",
+		string(r.githubRepo.url), ".")
 	return err
 }
 
-func (r repository) workingDirectoryClean() (bool, error) {
+func (r gitRepo) workingDirectoryClean() (bool, error) {
 	status, err := r.git("status")
 	if err != nil {
 		return false, err
@@ -91,7 +89,7 @@ func (r repository) workingDirectoryClean() (bool, error) {
 	return strings.Contains(status, "nothing to commit"), nil
 }
 
-func (r repository) gitCheckoutNewBranch() error {
+func (r gitRepo) gitCheckoutNewBranch() error {
 	// Generate branch name based on the current time.
 	t := time.Now()
 	branch := fmt.Sprintf("ci-%d-%02d-%02dT%02d-%02d-%02d",
@@ -103,7 +101,7 @@ func (r repository) gitCheckoutNewBranch() error {
 	return nil
 }
 
-func (r repository) gitCommitAndPush(message string) error {
+func (r gitRepo) gitCommitAndPush(message string) error {
 	// Stage all changes, commit them to the current branch
 	// and push the commit to the remote repository.
 	gitArgs := [][]string{
@@ -119,7 +117,7 @@ func (r repository) gitCommitAndPush(message string) error {
 	return nil
 }
 
-func (r repository) currentBranch() (string, error) {
+func (r gitRepo) currentBranch() (string, error) {
 	branch, err := r.git("rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
 		return "", err
@@ -127,7 +125,7 @@ func (r repository) currentBranch() (string, error) {
 	return strings.TrimSpace(branch), nil
 }
 
-func (r repository) git(args ...string) (string, error) {
+func (r gitRepo) git(args ...string) (string, error) {
 	// Change current directory to the repositorys local clone.
 	originalDir, err := os.Getwd()
 	if err != nil {
@@ -152,18 +150,18 @@ func (r repository) git(args ...string) (string, error) {
 	return string(out), nil
 }
 
-func (r repository) openPullRequest(ctx context.Context, title, body string) (string, error) {
+func (r gitRepo) openPullRequest(ctx context.Context, title, body string) (string, error) {
 	// PR will be open from the current branch.
 	currBranch, err := r.currentBranch()
 	if err != nil {
 		return "", fmt.Errorf("current branch: %w", err)
 	}
 	// Open pull request from current branch to the base branch.
-	url, err := r.gh.OpenPullRequest(ctx, openPullRequestParams{
+	url, err := r.pr.OpenPullRequest(ctx, openPullRequestParams{
 		title: title,
 		body:  body,
 		head:  currBranch,
-		base:  r.remote.Branch,
+		base:  r.branch,
 	})
 	if err != nil {
 		return "", fmt.Errorf("call github: %w", err)

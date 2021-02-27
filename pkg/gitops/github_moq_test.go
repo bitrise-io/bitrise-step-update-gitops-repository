@@ -8,26 +8,26 @@ import (
 	"sync"
 )
 
-// Ensure, that gitProviderMock does implement gitProvider.
+// Ensure, that pullRequestOpenerMock does implement pullRequestOpener.
 // If this is not the case, regenerate this file with moq.
-var _ gitProvider = &gitProviderMock{}
+var _ pullRequestOpener = &pullRequestOpenerMock{}
 
-// gitProviderMock is a mock implementation of gitProvider.
+// pullRequestOpenerMock is a mock implementation of pullRequestOpener.
 //
-//     func TestSomethingThatUsesgitProvider(t *testing.T) {
+//     func TestSomethingThatUsespullRequestOpener(t *testing.T) {
 //
-//         // make and configure a mocked gitProvider
-//         mockedgitProvider := &gitProviderMock{
+//         // make and configure a mocked pullRequestOpener
+//         mockedpullRequestOpener := &pullRequestOpenerMock{
 //             OpenPullRequestFunc: func(in1 context.Context, in2 openPullRequestParams) (string, error) {
 // 	               panic("mock out the OpenPullRequest method")
 //             },
 //         }
 //
-//         // use mockedgitProvider in code that requires gitProvider
+//         // use mockedpullRequestOpener in code that requires pullRequestOpener
 //         // and then make assertions.
 //
 //     }
-type gitProviderMock struct {
+type pullRequestOpenerMock struct {
 	// OpenPullRequestFunc mocks the OpenPullRequest method.
 	OpenPullRequestFunc func(in1 context.Context, in2 openPullRequestParams) (string, error)
 
@@ -45,9 +45,9 @@ type gitProviderMock struct {
 }
 
 // OpenPullRequest calls OpenPullRequestFunc.
-func (mock *gitProviderMock) OpenPullRequest(in1 context.Context, in2 openPullRequestParams) (string, error) {
+func (mock *pullRequestOpenerMock) OpenPullRequest(in1 context.Context, in2 openPullRequestParams) (string, error) {
 	if mock.OpenPullRequestFunc == nil {
-		panic("gitProviderMock.OpenPullRequestFunc: method is nil but gitProvider.OpenPullRequest was just called")
+		panic("pullRequestOpenerMock.OpenPullRequestFunc: method is nil but pullRequestOpener.OpenPullRequest was just called")
 	}
 	callInfo := struct {
 		In1 context.Context
@@ -64,8 +64,8 @@ func (mock *gitProviderMock) OpenPullRequest(in1 context.Context, in2 openPullRe
 
 // OpenPullRequestCalls gets all the calls that were made to OpenPullRequest.
 // Check the length with:
-//     len(mockedgitProvider.OpenPullRequestCalls())
-func (mock *gitProviderMock) OpenPullRequestCalls() []struct {
+//     len(mockedpullRequestOpener.OpenPullRequestCalls())
+func (mock *pullRequestOpenerMock) OpenPullRequestCalls() []struct {
 	In1 context.Context
 	In2 openPullRequestParams
 } {

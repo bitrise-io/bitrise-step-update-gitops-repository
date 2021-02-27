@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var repositoryCases = map[string]struct {
+var gitRepoCases = map[string]struct {
 	upstreamBranch string
 	repoURL        string
 }{
@@ -28,10 +28,10 @@ var repositoryCases = map[string]struct {
 	},
 }
 
-func TestRepository(t *testing.T) {
+func TestGitRepo(t *testing.T) {
 	ctx := context.Background()
 
-	for name, tc := range repositoryCases {
+	for name, tc := range gitRepoCases {
 		t.Run(name, func(t *testing.T) {
 			upstreamPath, close := localUpstreamRepo(t, tc.upstreamBranch)
 			defer close()
@@ -39,7 +39,7 @@ func TestRepository(t *testing.T) {
 			// Initialize mock Github client.
 			wantPullRequestURL := fmt.Sprintf("https://%s/pr/15", tc.repoURL)
 			var gotHead, gotBase string
-			gh := &gitProviderMock{
+			pr := &pullRequestOpenerMock{
 				OpenPullRequestFunc: func(_ context.Context, p openPullRequestParams) (string, error) {
 					gotHead = p.head
 					gotBase = p.base
@@ -47,14 +47,12 @@ func TestRepository(t *testing.T) {
 				},
 			}
 
-			repo, err := NewRepository(ctx, NewRepositoryParams{
-				Github: gh,
-				Remote: RemoteConfig{
-					Repo: &githubRepo{
-						url: stepconf.Secret(upstreamPath),
-					},
-					Branch: tc.upstreamBranch,
+			repo, err := NewGitRepo(ctx, NewGitRepoParams{
+				PullRequestOpener: pr,
+				GithubRepo: &githubRepo{
+					url: stepconf.Secret(upstreamPath),
 				},
+				Branch: tc.upstreamBranch,
 			})
 			t.Run("create new local repository clone", func(t *testing.T) {
 				require.NoError(t, err, "newRepository")

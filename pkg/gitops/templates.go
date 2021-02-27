@@ -23,7 +23,7 @@ type Templates struct {
 	// Values to substitute into the templates.
 	Values map[string]string
 	// Destination repository for rendered files.
-	DestinationRepo repositorier
+	DestinationRepo localRepository
 	// Destination folder inside the repository for rendered files.
 	DestinationFolder string
 }

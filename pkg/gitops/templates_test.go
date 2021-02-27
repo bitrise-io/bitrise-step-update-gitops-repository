@@ -139,7 +139,7 @@ func TestRenderAllFiles(t *testing.T) {
 			tr := Templates{
 				SourceFolder: templatesDir,
 				Values:       tc.values,
-				DestinationRepo: &repositorierMock{
+				DestinationRepo: &localRepositoryMock{
 					localPathFunc: func() string {
 						return renderRepo
 					},
