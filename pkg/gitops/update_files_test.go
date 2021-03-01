@@ -38,7 +38,7 @@ func TestUpdateFiles(t *testing.T) {
 			var gotNewBranch bool
 			var gotCommitMessage string
 			var gotPRTitle, gotPRBody string
-			repo := &repositorierMock{
+			repo := &localRepositoryMock{
 				workingDirectoryCleanFunc: func() (bool, error) {
 					return tc.wdClean, nil
 				},

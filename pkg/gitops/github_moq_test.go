@@ -8,57 +8,31 @@ import (
 	"sync"
 )
 
-// Ensure, that gitProviderMock does implement gitProvider.
+// Ensure, that pullRequestOpenerMock does implement pullRequestOpener.
 // If this is not the case, regenerate this file with moq.
-var _ gitProvider = &gitProviderMock{}
+var _ pullRequestOpener = &pullRequestOpenerMock{}
 
-// gitProviderMock is a mock implementation of gitProvider.
+// pullRequestOpenerMock is a mock implementation of pullRequestOpener.
 //
-//     func TestSomethingThatUsesgitProvider(t *testing.T) {
+//     func TestSomethingThatUsespullRequestOpener(t *testing.T) {
 //
-//         // make and configure a mocked gitProvider
-//         mockedgitProvider := &gitProviderMock{
-//             AddKeyFunc: func(in1 context.Context, in2 []byte) (int64, error) {
-// 	               panic("mock out the AddKey method")
-//             },
-//             DeleteKeyFunc: func(in1 context.Context, in2 int64) error {
-// 	               panic("mock out the DeleteKey method")
-//             },
+//         // make and configure a mocked pullRequestOpener
+//         mockedpullRequestOpener := &pullRequestOpenerMock{
 //             OpenPullRequestFunc: func(in1 context.Context, in2 openPullRequestParams) (string, error) {
 // 	               panic("mock out the OpenPullRequest method")
 //             },
 //         }
 //
-//         // use mockedgitProvider in code that requires gitProvider
+//         // use mockedpullRequestOpener in code that requires pullRequestOpener
 //         // and then make assertions.
 //
 //     }
-type gitProviderMock struct {
-	// AddKeyFunc mocks the AddKey method.
-	AddKeyFunc func(in1 context.Context, in2 []byte) (int64, error)
-
-	// DeleteKeyFunc mocks the DeleteKey method.
-	DeleteKeyFunc func(in1 context.Context, in2 int64) error
-
+type pullRequestOpenerMock struct {
 	// OpenPullRequestFunc mocks the OpenPullRequest method.
 	OpenPullRequestFunc func(in1 context.Context, in2 openPullRequestParams) (string, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// AddKey holds details about calls to the AddKey method.
-		AddKey []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 []byte
-		}
-		// DeleteKey holds details about calls to the DeleteKey method.
-		DeleteKey []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
-			// In2 is the in2 argument value.
-			In2 int64
-		}
 		// OpenPullRequest holds details about calls to the OpenPullRequest method.
 		OpenPullRequest []struct {
 			// In1 is the in1 argument value.
@@ -67,85 +41,13 @@ type gitProviderMock struct {
 			In2 openPullRequestParams
 		}
 	}
-	lockAddKey          sync.RWMutex
-	lockDeleteKey       sync.RWMutex
 	lockOpenPullRequest sync.RWMutex
 }
 
-// AddKey calls AddKeyFunc.
-func (mock *gitProviderMock) AddKey(in1 context.Context, in2 []byte) (int64, error) {
-	if mock.AddKeyFunc == nil {
-		panic("gitProviderMock.AddKeyFunc: method is nil but gitProvider.AddKey was just called")
-	}
-	callInfo := struct {
-		In1 context.Context
-		In2 []byte
-	}{
-		In1: in1,
-		In2: in2,
-	}
-	mock.lockAddKey.Lock()
-	mock.calls.AddKey = append(mock.calls.AddKey, callInfo)
-	mock.lockAddKey.Unlock()
-	return mock.AddKeyFunc(in1, in2)
-}
-
-// AddKeyCalls gets all the calls that were made to AddKey.
-// Check the length with:
-//     len(mockedgitProvider.AddKeyCalls())
-func (mock *gitProviderMock) AddKeyCalls() []struct {
-	In1 context.Context
-	In2 []byte
-} {
-	var calls []struct {
-		In1 context.Context
-		In2 []byte
-	}
-	mock.lockAddKey.RLock()
-	calls = mock.calls.AddKey
-	mock.lockAddKey.RUnlock()
-	return calls
-}
-
-// DeleteKey calls DeleteKeyFunc.
-func (mock *gitProviderMock) DeleteKey(in1 context.Context, in2 int64) error {
-	if mock.DeleteKeyFunc == nil {
-		panic("gitProviderMock.DeleteKeyFunc: method is nil but gitProvider.DeleteKey was just called")
-	}
-	callInfo := struct {
-		In1 context.Context
-		In2 int64
-	}{
-		In1: in1,
-		In2: in2,
-	}
-	mock.lockDeleteKey.Lock()
-	mock.calls.DeleteKey = append(mock.calls.DeleteKey, callInfo)
-	mock.lockDeleteKey.Unlock()
-	return mock.DeleteKeyFunc(in1, in2)
-}
-
-// DeleteKeyCalls gets all the calls that were made to DeleteKey.
-// Check the length with:
-//     len(mockedgitProvider.DeleteKeyCalls())
-func (mock *gitProviderMock) DeleteKeyCalls() []struct {
-	In1 context.Context
-	In2 int64
-} {
-	var calls []struct {
-		In1 context.Context
-		In2 int64
-	}
-	mock.lockDeleteKey.RLock()
-	calls = mock.calls.DeleteKey
-	mock.lockDeleteKey.RUnlock()
-	return calls
-}
-
 // OpenPullRequest calls OpenPullRequestFunc.
-func (mock *gitProviderMock) OpenPullRequest(in1 context.Context, in2 openPullRequestParams) (string, error) {
+func (mock *pullRequestOpenerMock) OpenPullRequest(in1 context.Context, in2 openPullRequestParams) (string, error) {
 	if mock.OpenPullRequestFunc == nil {
-		panic("gitProviderMock.OpenPullRequestFunc: method is nil but gitProvider.OpenPullRequest was just called")
+		panic("pullRequestOpenerMock.OpenPullRequestFunc: method is nil but pullRequestOpener.OpenPullRequest was just called")
 	}
 	callInfo := struct {
 		In1 context.Context
@@ -162,8 +64,8 @@ func (mock *gitProviderMock) OpenPullRequest(in1 context.Context, in2 openPullRe
 
 // OpenPullRequestCalls gets all the calls that were made to OpenPullRequest.
 // Check the length with:
-//     len(mockedgitProvider.OpenPullRequestCalls())
-func (mock *gitProviderMock) OpenPullRequestCalls() []struct {
+//     len(mockedpullRequestOpener.OpenPullRequestCalls())
+func (mock *pullRequestOpenerMock) OpenPullRequestCalls() []struct {
 	In1 context.Context
 	In2 openPullRequestParams
 } {

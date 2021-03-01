@@ -28,6 +28,8 @@ type config struct {
 	TemplatesFolder string `env:"templates_folder_path,dir"`
 	// DeployToken is the Personal Access Token to interact with Github API.
 	DeployToken stepconf.Secret `env:"deploy_token,required"`
+	// DeployUser is the username associated with the Personal Access Token.
+	DeployUser string `env:"deploy_user"`
 	// CommitMessage is the created commit's message.
 	CommitMessage string `env:"commit_message,required"`
 }

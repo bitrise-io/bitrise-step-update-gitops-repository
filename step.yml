@@ -7,9 +7,7 @@ description: |
   given folder of a given branch or by opening a pull request to it.
   URL of the pull request is exposed as an output in the latter case.
   Updated files are go templates rendered by substituting given values.
-  A Github Personal Access Token must be provided with access to the repository.
-  A temporary SSH key will automatically be added to the repository to push
-  changes. It will also be automatically deleted once the step terminated.
+  A Github username and Personal Access Token must be provided with access to the repository.
 website: https://github.com/bitrise-io/bitrise-step-update-gitops-repository
 source_code_url: https://github.com/bitrise-io/bitrise-step-update-gitops-repository
 support_url: https://github.com/bitrise-io/bitrise-step-update-gitops-repository/issues
@@ -37,7 +35,7 @@ toolkit:
 inputs:
 - deploy_repository_url: ""
   opts:
-    title: Github SSH URL of the repository to deploy to
+    title: Github HTTPS URL of the repository to deploy to
     is_required: true
 - deploy_path: ""
   opts:
@@ -47,6 +45,10 @@ inputs:
   opts:
     title: Personal Access Token to interact with Github API
     is_sensitive: true
+    is_required: true
+- deploy_user: ""
+  opts:
+    title: Github username associated with the Personal Access Token
     is_required: true
 - deploy_branch: "master"
   opts:

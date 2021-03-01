@@ -6,9 +6,7 @@ Updates files of a GitOps repository either by pushing changes directly to a
 given folder of a given branch or by opening a pull request to it.
 URL of the pull request is exposed as an output in the latter case.
 Updated files are go templates rendered by substituting given values.
-A Github Personal Access Token must be provided with access to the repository.
-A temporary SSH key will automatically be added to the repository to push
-changes. It will also be automatically deleted once the step terminated.
+A Github username and Personal Access Token must be provided with access to the repository.
 
 ## How to use this Step
 

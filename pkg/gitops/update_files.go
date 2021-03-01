@@ -9,7 +9,7 @@ import (
 // Integration is a GitOps integration for Bitrise CI.
 type Integration struct {
 	// Repo is local clone of remote repository.
-	Repo repositorier
+	Repo localRepository
 	// ExportEnv is an environment variable exporter.
 	ExportEnv envExporter
 	// Renderer renders templates to a given repository.
