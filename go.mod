@@ -7,6 +7,6 @@ require (
 	github.com/bitrise-io/go-utils v0.0.0-20201019131314-6cc2aa4d248a // indirect
 	github.com/google/go-github/v33 v33.0.0
 	github.com/stretchr/testify v1.5.1
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/oauth2 v0.0.0-20201208152858-08078c50e5b5
+	gopkg.in/yaml.v2 v2.2.8
 )
