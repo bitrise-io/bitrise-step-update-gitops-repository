@@ -87,7 +87,7 @@ inputs:
   opts:
     title: Title of the opened pull request
     category: Pull Request
-- pull_request_body: ""
+- pull_request_body: "Source commit: https://github.com/$BITRISEIO_GIT_REPOSITORY_OWNER/$BITRISEIO_GIT_REPOSITORY_SLUG/commit/$BITRISE_GIT_COMMIT"
   opts:
     title: Body of the opened pull request
     category: Pull Request
