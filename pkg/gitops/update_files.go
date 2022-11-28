@@ -75,5 +75,6 @@ func (i Integration) UpdateFiles(ctx context.Context, p UpdateFilesParams) error
 	if err := i.ExportEnv("PR_URL", prURL); err != nil {
 		return fmt.Errorf("export PR_URL env var: %w", err)
 	}
+	log.Println(fmt.Sprintf("Created deployment PR at %s.", prURL))
 	return nil
 }
