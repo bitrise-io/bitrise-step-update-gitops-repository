@@ -1,12 +1,24 @@
 module github.com/bitrise-io/bitrise-step-update-gitops-repository
 
-go 1.15
+go 1.19
 
 require (
-	github.com/bitrise-io/go-steputils v0.0.0-20201016102104-03ae3a6ded35
-	github.com/bitrise-io/go-utils v0.0.0-20201019131314-6cc2aa4d248a // indirect
+	github.com/bitrise-io/go-steputils v1.0.4
 	github.com/google/go-github/v33 v33.0.0
-	github.com/stretchr/testify v1.5.1
-	golang.org/x/oauth2 v0.0.0-20201208152858-08078c50e5b5
-	gopkg.in/yaml.v2 v2.2.8
+	github.com/stretchr/testify v1.8.1
+	golang.org/x/oauth2 v0.3.0
+	gopkg.in/yaml.v2 v2.4.0
+)
+
+require (
+	github.com/bitrise-io/go-utils v1.0.1 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/go-querystring v1.0.0 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e // indirect
+	golang.org/x/net v0.3.0 // indirect
+	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
