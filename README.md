@@ -8,30 +8,31 @@ URL of the pull request is exposed as an output in the latter case.
 Updated files are go templates rendered by substituting given values.
 A Github username and Personal Access Token must be provided with access to the repository.
 
-## How to use this Step
+## How to test this Step
 
-Can be run directly with the [bitrise CLI](https://github.com/bitrise-io/bitrise),
-just `git clone` this repository, `cd` into it's folder in your Terminal/Command Line
-and call `bitrise run test`.
+0. Clone this repo
+1. Set up .bitrise.secrets.yml file with the following content:
 
-*Check the `bitrise.yml` file for required inputs which have to be
-added to your `.bitrise.secrets.yml` file!*
-
-Step by step:
-
-1. Open up your Terminal / Command Line
-2. `git clone` the repository
-3. `cd` into the directory of the step (the one you just `git clone`d)
-5. Create a `.bitrise.secrets.yml` file in the same directory of `bitrise.yml`
-   (the `.bitrise.secrets.yml` is a git ignored file, you can store your secrets in it)
-6. Check the `bitrise.yml` file for any secret you should set in `.bitrise.secrets.yml`
-  * Best practice is to mark these options with something like `# define these in your .bitrise.secrets.yml`, in the `app:envs` section.
-7. Check the `bitrise.yml` file for any non-sensitive environment variables, export them in your CLI.
-8. Once you have all the required environment variables and secret parameters in your `.bitrise.secrets.yml` you can just run this step with the [bitrise CLI](https://github.com/bitrise-io/bitrise): `bitrise run test`
-
-An example `.bitrise.secrets.yml` file:
-
-```
+```yaml
 envs:
-- DEPLOY_TOKEN: my-pat
+  - DEPLOY_TOKEN: YOUR PAT
+  - MY_STEPLIB_REPO_FORK_GIT_URL: YOUR FORK HTTP URL OF THE STEPLIB REPO
 ```
+
+2. Export these variables in your terminal 
+   - `$DEPLOY_USER`: your GH username
+   - `$DEPLOY_REPO_URL`: Where to test commit, e.g. https://github.com/bitrise-io/sandbox-deployments.git
+   - `$DEPLOY_PATH`: An existing folder in that repo, e.g. zsolt-test
+3. Run `bitrise run test` which will open a PR
+4. Confirm the PR is opened but close it
+
+## How to release
+
+1. Merge the PR
+1. Create a new release / tag
+1. Fork the steplib https://github.com/bitrise-io/bitrise-steplib
+1. Set YOUR fork steplib URL in the secrets file (see above)
+1. Export the step version `$BITRISE_STEP_VERSION` in your terminal, *without* the prefix `v`
+1. Run `bitrise run share-this-step`
+1. Go to your forked steplib and create a PR
+1. Get someone to review your PR and merge it
