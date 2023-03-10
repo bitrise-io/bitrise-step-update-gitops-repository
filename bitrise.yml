@@ -14,7 +14,7 @@ app:
     - BITRISE_STEP_GIT_CLONE_URL: https://github.com/bitrise-io/bitrise-step-update-gitops-repository.git
     - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
     - GOLANGCI_INSTALL_URL: https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh
-    - GOLANGCI_LINT_VERSION: "v1.35.2"
+    - GOLANGCI_LINT_VERSION: "v1.51.2"
 
 trigger_map:
   - pull_request_target_branch: master
@@ -26,7 +26,6 @@ trigger_map:
 workflows:
   primary:
     before_run:
-      - _install_fixed_go_version
       - _install_golangci_lint
     steps:
       - activate-ssh-key@4: { }
@@ -62,17 +61,6 @@ workflows:
                 #!/bin/bash
                 echo "My Pull Request URL: $PR_URL"
 
-  _install_fixed_go_version:
-    description: Install the 1.15.5 version of go
-    steps:
-      - script:
-          inputs:
-            - content: |-
-                #!/bin/bash
-                set -euo pipefail
-                rm -rf /usr/local/go
-                wget https://dl.google.com/go/go1.15.5.linux-amd64.tar.gz \
-                  && tar -C /usr/local -xzf go1.15.5.linux-amd64.tar.gz
   _install_golangci_lint:
     description: Install golangci-lint
     steps:
