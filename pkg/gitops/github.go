@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/bitrise-io/go-steputils/stepconf"
-	gogh "github.com/google/go-github/v33/github"
+	gogh "github.com/google/go-github/v50/github"
 	"golang.org/x/oauth2"
 )
 
