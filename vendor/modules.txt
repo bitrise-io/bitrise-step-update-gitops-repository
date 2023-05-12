@@ -26,8 +26,8 @@ github.com/bitrise-io/go-steputils/stepconf
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/parseutil
 github.com/bitrise-io/go-utils/pointers
-# github.com/cloudflare/circl v1.3.2
-## explicit; go 1.17
+# github.com/cloudflare/circl v1.3.3
+## explicit; go 1.19
 github.com/cloudflare/circl/dh/x25519
 github.com/cloudflare/circl/dh/x448
 github.com/cloudflare/circl/ecc/goldilocks
