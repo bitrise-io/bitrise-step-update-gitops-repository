@@ -52,6 +52,7 @@ workflows:
             - templates_folder_path: e2e/deployments/helm
             - pull_request: true
             - deploy_user: $DEPLOY_USER
+            - deploy_branch: staging
             - values: |
                 repository: us.gcr.io/ip-kubernetes-dev/hello-world-service
                 tag: test-tag
