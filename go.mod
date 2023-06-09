@@ -4,18 +4,13 @@ go 1.17
 
 require (
 	github.com/bitrise-io/go-steputils v1.0.5
-	github.com/google/go-github/v50 v50.2.0
 	github.com/google/go-github/v53 v53.0.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/oauth2 v0.8.0
-	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require (
-	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/appengine/v2 v2.0.3 // indirect
-)
+require google.golang.org/appengine v1.6.7 // indirect
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230528122434-6f98819771a1 // indirect
