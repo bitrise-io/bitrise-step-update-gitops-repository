@@ -25,14 +25,11 @@ github.com/pmezard/go-difflib/difflib
 ## explicit; go 1.20
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# golang.org/x/net v0.19.0
-## explicit; go 1.18
-golang.org/x/net/context
 # golang.org/x/oauth2 v0.15.0
 ## explicit; go 1.18
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# google.golang.org/appengine v1.6.7
+# google.golang.org/appengine v1.6.8
 ## explicit; go 1.11
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/base
@@ -41,8 +38,6 @@ google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
-# google.golang.org/appengine/v2 v2.0.5
-## explicit; go 1.11
 # google.golang.org/protobuf v1.32.0
 ## explicit; go 1.17
 google.golang.org/protobuf/encoding/prototext
