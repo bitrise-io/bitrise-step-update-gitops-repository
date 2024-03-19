@@ -1,7 +1,6 @@
 package gitops
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -29,6 +28,16 @@ dependencies:
   version: "0.1.1"
   repository: "https://bitrise-io.github.io/k8s-recipes/"
 `
+	templateBrewFormulae = `
+class BitriseDenAgent < Formula
+	desc "CLI for Bitrise DEN agent"
+	homepage "https://github.com/bitrise-io/bitrise-den-agent"
+	url "https://github.com/bitrise-io/bitrise-den-agent.git",
+	  tag:      "{{ .brew_forumlae_tag }}",
+	  revision: "{{ .brew_forumlae_revision }}"
+	license ""
+end  
+`
 )
 
 // Possible outputs of rendered templates.
@@ -54,6 +63,16 @@ dependencies:
 - name: api-service
   version: "0.1.1"
   repository: "https://bitrise-io.github.io/k8s-recipes/"
+`
+	renderedBrewFormulae = `
+class BitriseDenAgent < Formula
+	desc "CLI for Bitrise DEN agent"
+	homepage "https://github.com/bitrise-io/bitrise-den-agent"
+	url "https://github.com/bitrise-io/bitrise-den-agent.git",
+	  tag:      "v1.2.3",
+	  revision: "aaabbbcccdddeeefff"
+	license ""
+end  
 `
 )
 
@@ -110,18 +129,24 @@ var renderAllFilesCases = map[string]struct {
 		folder:    "wont-use-this-folder",
 		wantErr:   true,
 	},
+	"html tags are correctly rendered in brew formulae": {
+		templates: map[string]string{"formulae.rb": templateBrewFormulae},
+		values:    map[string]string{"brew_forumlae_tag": "v1.2.3", "brew_forumlae_revision": "aaabbbcccdddeeefff"},
+		folder:    "another-folder-with-values-yaml",
+		wantFiles: map[string]string{"formulae.rb": renderedBrewFormulae},
+	},
 }
 
 func TestRenderAllFiles(t *testing.T) {
 	for name, tc := range renderAllFilesCases {
 		t.Run(name, func(t *testing.T) {
 			// Create temporary directory for templates.
-			templatesDir, err := ioutil.TempDir("", "")
+			templatesDir, err := os.MkdirTemp("", "")
 			require.NoError(t, err, "new temp templates dir")
 			defer os.RemoveAll(templatesDir)
 
 			// Create a mock temporary directory for local clone of repository.
-			renderRepo, err := ioutil.TempDir("", "")
+			renderRepo, err := os.MkdirTemp("", "")
 			require.NoError(t, err, "new temp render repo")
 			defer os.RemoveAll(renderRepo)
 			// Create directory inside that for rendered files.
@@ -131,7 +156,7 @@ func TestRenderAllFiles(t *testing.T) {
 			// Copy desired templates to the previously created temp directory.
 			for fileName, content := range tc.templates {
 				filePath := path.Join(templatesDir, fileName)
-				err := ioutil.WriteFile(filePath, []byte(content), 0600)
+				err := os.WriteFile(filePath, []byte(content), 0600)
 				require.NoError(t, err, "write template %q", fileName)
 			}
 
@@ -162,7 +187,7 @@ func TestRenderAllFiles(t *testing.T) {
 			}
 
 			var gotFileNames []string
-			gotFileInfos, err := ioutil.ReadDir(renderDir)
+			gotFileInfos, err := os.ReadDir(renderDir)
 			require.NoError(t, err, "read files of render dir")
 			for _, v := range gotFileInfos {
 				gotFileNames = append(gotFileNames, v.Name())
@@ -173,7 +198,7 @@ func TestRenderAllFiles(t *testing.T) {
 			// Assert for contents of rendered files.
 			for fileName, want := range tc.wantFiles {
 				filePath := path.Join(renderDir, fileName)
-				got, err := ioutil.ReadFile(filePath)
+				got, err := os.ReadFile(filePath)
 				require.NoError(t, err, "read contents of %q", filePath)
 				assert.EqualValues(t, want, string(got), "contents of %q", fileName)
 			}
