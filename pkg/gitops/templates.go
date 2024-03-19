@@ -2,10 +2,9 @@ package gitops
 
 import (
 	"fmt"
-	"html/template"
-	"io/ioutil"
 	"os"
 	"path/filepath"
+	"text/template"
 )
 
 //go:generate moq -out templates_moq_test.go . allFilesRenderer
@@ -30,7 +29,7 @@ type Templates struct {
 
 func (tr Templates) renderAllFiles() error {
 	// Get all template file names from the source folder.
-	files, err := ioutil.ReadDir(tr.SourceFolder)
+	files, err := os.ReadDir(tr.SourceFolder)
 	if err != nil {
 		return fmt.Errorf("read files in %q: %w", tr.SourceFolder, err)
 	}
