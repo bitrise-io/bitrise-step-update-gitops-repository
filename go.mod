@@ -2,8 +2,6 @@ module github.com/bitrise-io/bitrise-step-update-gitops-repository
 
 go 1.21
 
-toolchain go1.22.2
-
 require (
 	github.com/bitrise-io/go-steputils v1.0.6
 	github.com/google/go-github/v57 v57.0.0
