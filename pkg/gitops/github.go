@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/bitrise-io/go-steputils/stepconf"
-	gogh "github.com/google/go-github/v57/github"
+	gogh "github.com/google/go-github/v63/github"
 	"golang.org/x/oauth2"
 )
 
@@ -49,8 +49,13 @@ func (gh githubClient) OpenPullRequest(ctx context.Context, p openPullRequestPar
 	if p.title == "" {
 		p.title = "Merge " + p.head
 	}
+
+	if len(p.title) > 255 {
+		p.title = p.title[:255]
+	}
+
 	req := &gogh.NewPullRequest{
-		Title: gogh.String(p.title[:255]),
+		Title: gogh.String(p.title),
 		Body:  gogh.String(p.body),
 		Head:  gogh.String(p.head),
 		Base:  gogh.String(p.base),
