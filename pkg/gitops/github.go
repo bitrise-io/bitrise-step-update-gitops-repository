@@ -50,7 +50,7 @@ func (gh githubClient) OpenPullRequest(ctx context.Context, p openPullRequestPar
 		p.title = "Merge " + p.head
 	}
 	req := &gogh.NewPullRequest{
-		Title: gogh.String(p.title),
+		Title: gogh.String(p.title[:255]),
 		Body:  gogh.String(p.body),
 		Head:  gogh.String(p.head),
 		Base:  gogh.String(p.base),
