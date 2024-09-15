@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"regexp"
-	"strings"
 )
 
 type Replacer struct {
@@ -90,9 +89,6 @@ func (rp Replacer) renderFile(fileName string) (string, error) {
 		}
 		w.WriteString(replacedLine) // nolint:errcheck
 
-		if strings.HasSuffix(fileName, "values.ci.yaml") {
-			fmt.Println(replacedLine)
-		}
 		if EOF {
 			break
 		}
