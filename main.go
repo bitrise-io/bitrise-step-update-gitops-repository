@@ -51,12 +51,24 @@ func run() error {
 	}
 	defer localRepo.Close(ctx)
 
+	var renderer gitops.AllFilesRenderer
 	// Create templates renderer.
-	renderer := gitops.Templates{
+	renderer = gitops.Templates{
 		SourceFolder:      cfg.TemplatesFolder,
 		Values:            cfg.Values,
 		DestinationRepo:   localRepo,
 		DestinationFolder: cfg.DeployFolder,
+	}
+
+	if cfg.ReplacerMode {
+		// Create templates replacer.
+		renderer = gitops.Replacer{
+			Values:            cfg.Values,
+			Delimiter:         cfg.Delimiter,
+			DestinationRepo:   localRepo,
+			DestinationFolder: cfg.DeployFolder,
+			Files:             cfg.Files,
+		}
 	}
 
 	// Update files of gitops repository.

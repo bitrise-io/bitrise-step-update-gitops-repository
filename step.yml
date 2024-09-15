@@ -72,6 +72,7 @@ inputs:
       my-key1: my value 1
       my-key2: my value 2
       ```
+
     category: Templates
 - pull_request: false
   opts:
@@ -91,6 +92,32 @@ inputs:
   opts:
     title: Body of the opened pull request
     category: Pull Request
+- replacer_mode: false
+  opts:
+    title: Key-value matching mode
+    category: Replacer mode
+    description: |
+      There are situations when simple templating is not sufficient. 
+      Replacer mode enables matching & replacing values based on a key+delimiter combination,
+      across multiple files.
+    value_options:
+    - "true"
+    - "false"
+- delimiter: "="
+  opts:
+    title: Delimiter
+    category: Replacer mode
+    description: |
+      Indicates the delimiter between key and value.
+      For example in "key=value", "=" is the delimiter. 
+      Required when "Replacer mode" is enabled.
+- files:
+  opts:
+    title: Files
+    category: Replacer mode
+    description: |
+      List of files to scan for matching key-value pairs.
+      Required when "Replacer mode" is enabled.
 
 outputs:
 - PR_URL:

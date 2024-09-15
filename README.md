@@ -2,11 +2,41 @@
 
 # Update GitOps repository
 
+## Default mode
 Updates files of a GitOps repository either by pushing changes directly to a
 given folder of a given branch or by opening a pull request to it.
 URL of the pull request is exposed as an output in the latter case.
 Updated files are go templates rendered by substituting given values.
 A Github username and Personal Access Token must be provided with access to the repository.
+
+## Replacer mode
+There are situation when simple templating is not sufficient (e.g.: 100 LOC config files). Replacer mode solves this issue by replacing values that match the provided key-delimiter combinations. 
+
+### Example
+Example:
+We have a long config file that has the following line:
+`us.gcr.io/ip-kubernetes-dev/hello-world-service:tag1`
+We would like to replace `tag1` by `tag2` without creating a template.
+We can use the step in "Replacer mode", by defining `us.gcr.io/ip-kubernetes-dev/hello-world-service` as `key`, and `:` as `delimiter`. The step will match & replace `tag1` based on the provided key-delimiter combination.
+
+When `replacer_mode` is enabled, `values` expects input a bit differently. To achieve the desired outcome above of the above example, one could use the following step inputs:
+```yaml
+inputs:
+  - deploy_repository_url: $DEPLOY_REPO_URL
+  - deploy_path: $DEPLOY_PATH
+  - pull_request: true
+  - deploy_user: $DEPLOY_USER
+  - deploy_branch: $BRANCH
+  - replacer_mode: true
+  - delimiter: ":"
+  - files: 
+      - example_config_file.yaml
+  - values: |
+      us.gcr.io/ip-kubernetes-dev/hello-world-service: tag2
+```
+In this case the step will look for maches in `example_config_file.yaml`, where the full path is `$DEPLOY_PATH/example_config_file.yaml`.
+
+# Development
 
 ## How to test this Step
 

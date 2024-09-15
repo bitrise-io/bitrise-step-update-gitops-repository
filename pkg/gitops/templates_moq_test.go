@@ -7,26 +7,26 @@ import (
 	"sync"
 )
 
-// Ensure, that allFilesRendererMock does implement allFilesRenderer.
+// Ensure, that AllFilesRendererMock does implement AllFilesRenderer.
 // If this is not the case, regenerate this file with moq.
-var _ allFilesRenderer = &allFilesRendererMock{}
+var _ AllFilesRenderer = &AllFilesRendererMock{}
 
-// allFilesRendererMock is a mock implementation of allFilesRenderer.
+// AllFilesRendererMock is a mock implementation of AllFilesRenderer.
 //
-//     func TestSomethingThatUsesallFilesRenderer(t *testing.T) {
+//	func TestSomethingThatUsesAllFilesRenderer(t *testing.T) {
 //
-//         // make and configure a mocked allFilesRenderer
-//         mockedallFilesRenderer := &allFilesRendererMock{
-//             renderAllFilesFunc: func() error {
-// 	               panic("mock out the renderAllFiles method")
-//             },
-//         }
+//		// make and configure a mocked AllFilesRenderer
+//		mockedAllFilesRenderer := &AllFilesRendererMock{
+//			renderAllFilesFunc: func() error {
+//				panic("mock out the renderAllFiles method")
+//			},
+//		}
 //
-//         // use mockedallFilesRenderer in code that requires allFilesRenderer
-//         // and then make assertions.
+//		// use mockedAllFilesRenderer in code that requires AllFilesRenderer
+//		// and then make assertions.
 //
-//     }
-type allFilesRendererMock struct {
+//	}
+type AllFilesRendererMock struct {
 	// renderAllFilesFunc mocks the renderAllFiles method.
 	renderAllFilesFunc func() error
 
@@ -40,9 +40,9 @@ type allFilesRendererMock struct {
 }
 
 // renderAllFiles calls renderAllFilesFunc.
-func (mock *allFilesRendererMock) renderAllFiles() error {
+func (mock *AllFilesRendererMock) renderAllFiles() error {
 	if mock.renderAllFilesFunc == nil {
-		panic("allFilesRendererMock.renderAllFilesFunc: method is nil but allFilesRenderer.renderAllFiles was just called")
+		panic("AllFilesRendererMock.renderAllFilesFunc: method is nil but AllFilesRenderer.renderAllFiles was just called")
 	}
 	callInfo := struct {
 	}{}
@@ -54,8 +54,9 @@ func (mock *allFilesRendererMock) renderAllFiles() error {
 
 // renderAllFilesCalls gets all the calls that were made to renderAllFiles.
 // Check the length with:
-//     len(mockedallFilesRenderer.renderAllFilesCalls())
-func (mock *allFilesRendererMock) renderAllFilesCalls() []struct {
+//
+//	len(mockedAllFilesRenderer.renderAllFilesCalls())
+func (mock *AllFilesRendererMock) renderAllFilesCalls() []struct {
 } {
 	var calls []struct {
 	}

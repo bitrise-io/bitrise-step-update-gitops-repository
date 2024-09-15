@@ -61,6 +61,24 @@ workflows:
             - content: |
                 #!/bin/bash
                 echo "My Pull Request URL: $PR_URL"
+      - path::./:
+          title: Test updating matches in a GitOps repository file
+          inputs:
+            - deploy_repository_url: $DEPLOY_REPO_URL
+            - deploy_path: $DEPLOY_PATH
+            - pull_request: true
+            - deploy_user: $DEPLOY_USER
+            - deploy_branch: staging
+            - replacer_mode: true
+            - delimiter: ":"
+            - files: values.ci.yaml
+            - values: |
+                us.gcr.io/ip-kubernetes-dev/hello-world-service: v6
+      - script:
+          inputs:
+            - content: |
+                #!/bin/bash
+                echo "My Pull Request URL: $PR_URL"
 
   _install_golangci_lint:
     description: Install golangci-lint
