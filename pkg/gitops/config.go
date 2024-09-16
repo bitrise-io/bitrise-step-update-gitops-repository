@@ -2,6 +2,7 @@ package gitops
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"gopkg.in/yaml.v3"
@@ -36,8 +37,10 @@ type config struct {
 	ReplacerMode bool `env:"replacer_mode,required"`
 	// Delimiter indicates the delimiter between key and value in replacer mode
 	Delimiter string `env:"delimiter"`
+	// RawFiles are unparsed version of `Files` field (to-be-parsed manually).
+	RawFiles string `env:"files"`
 	// Files are required in replacer mode. List of files to find values in for replacement.
-	Files []string `env:"files"`
+	Files []string
 }
 
 func (c config) validate() error {
@@ -69,6 +72,14 @@ func NewConfig() (config, error) {
 		return config{}, fmt.Errorf("parse values: %w", err)
 	}
 
+	if cfg.ReplacerMode {
+		files, err := parseStringSlice([]byte(cfg.RawFiles), cfg.Files)
+		if err != nil {
+			return config{}, fmt.Errorf("parsing files to string slice: %w", err)
+		}
+		cfg.Files = files
+	}
+
 	if err := cfg.validate(); err != nil {
 		return config{}, fmt.Errorf("config validation failed: %w", err)
 	}
@@ -78,4 +89,16 @@ func NewConfig() (config, error) {
 
 func requiredError(field string) error {
 	return fmt.Errorf("\n- %s: required variable is not present", field)
+}
+
+func parseStringSlice(raw []byte, field []string) ([]string, error) {
+	if err := yaml.Unmarshal(raw, &field); err != nil {
+		return nil, fmt.Errorf("parse string to string slice: %w", err)
+	}
+	elements := make([]string, 0)
+	for _, s := range field {
+		elements = append(elements, strings.Fields(s)...)
+	}
+
+	return elements, nil
 }
