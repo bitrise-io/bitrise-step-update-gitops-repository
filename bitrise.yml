@@ -71,8 +71,11 @@ workflows:
             - deploy_branch: staging
             - replacer_mode: true
             - delimiter: ":"
-            - files: values.ci.yaml
+            - files:
+              - values.yaml
+              - values.ci.yaml
             - values: |
+                sm: //ip-backstage-dev/backstage-database-password2
                 us.gcr.io/ip-kubernetes-dev/hello-world-service: v6
       - script:
           inputs:
