@@ -36,6 +36,9 @@ inputs:
 ```
 In this case the step will look for maches in `example_config_file.yaml`, where the full path is `$DEPLOY_PATH/example_config_file.yaml`.
 
+### Caveats
+In Replacer mode, the step matches values up until the first comma, exclamation mark, single quote or double quote.
+
 # Development
 
 ## How to test this Step
