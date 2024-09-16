@@ -25,13 +25,37 @@ type config struct {
 	// Values are values applied to the template files.
 	Values map[string]string
 	// TemplatesFolder is the path to the deployment templates folder.
-	TemplatesFolder string `env:"templates_folder_path,dir"`
+	TemplatesFolder string `env:"templates_folder_path"`
 	// DeployToken is the Personal Access Token to interact with Github API.
 	DeployToken stepconf.Secret `env:"deploy_token,required"`
 	// DeployUser is the username associated with the Personal Access Token.
 	DeployUser string `env:"deploy_user"`
 	// CommitMessage is the created commit's message.
 	CommitMessage string `env:"commit_message,required"`
+	// ReplacerMode matches & replaces unknown values by key+delimiter instead of templating
+	ReplacerMode bool `env:"replacer_mode,required"`
+	// Delimiter indicates the delimiter between key and value in replacer mode
+	Delimiter string `env:"delimiter"`
+	// Files are required in replacer mode. List of files to find values in for replacement.
+	Files []string `env:"files"`
+}
+
+func (c config) validate() error {
+	if !c.ReplacerMode {
+		if len(c.TemplatesFolder) == 0 {
+			return requiredError("TemplatesFolder")
+		}
+		return nil
+	}
+
+	if len(c.Delimiter) == 0 {
+		return requiredError("Delimiter")
+	}
+	if len(c.Files) == 0 {
+		return requiredError("Files")
+	}
+
+	return nil
 }
 
 // NewConfig returns a new configuration initialized from environment variables.
@@ -41,5 +65,17 @@ func NewConfig() (config, error) {
 		return config{}, fmt.Errorf("parse step config: %w", err)
 	}
 
-	return cfg, yaml.Unmarshal([]byte(cfg.RawValues), &cfg.Values)
+	if err := yaml.Unmarshal([]byte(cfg.RawValues), &cfg.Values); err != nil {
+		return config{}, fmt.Errorf("parse values: %w", err)
+	}
+
+	if err := cfg.validate(); err != nil {
+		return config{}, fmt.Errorf("config validation failed: %w", err)
+	}
+
+	return cfg, nil
+}
+
+func requiredError(field string) error {
+	return fmt.Errorf("\n- %s: required variable is not present", field)
 }

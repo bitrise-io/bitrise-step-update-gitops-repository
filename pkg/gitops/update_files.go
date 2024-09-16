@@ -13,7 +13,7 @@ type Integration struct {
 	// ExportEnv is an environment variable exporter.
 	ExportEnv envExporter
 	// Renderer renders templates to a given repository.
-	Renderer allFilesRenderer
+	Renderer AllFilesRenderer
 }
 
 // UpdateFilesParams are parameters for UpdateFiles function.

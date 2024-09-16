@@ -65,7 +65,7 @@ func TestUpdateFiles(t *testing.T) {
 			}
 			// Mock of templates renderer.
 			var gotFilesRendered bool
-			renderer := &allFilesRendererMock{
+			renderer := &AllFilesRendererMock{
 				renderAllFilesFunc: func() error {
 					gotFilesRendered = true
 					return nil

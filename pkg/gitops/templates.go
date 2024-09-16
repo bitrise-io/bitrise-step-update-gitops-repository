@@ -7,13 +7,13 @@ import (
 	"text/template"
 )
 
-//go:generate moq -out templates_moq_test.go . allFilesRenderer
-type allFilesRenderer interface {
+//go:generate moq -out templates_moq_test.go . AllFilesRenderer
+type AllFilesRenderer interface {
 	renderAllFiles() error
 }
 
 // templates implements the allFilesRenderer interface.
-var _ allFilesRenderer = (*Templates)(nil)
+var _ AllFilesRenderer = (*Templates)(nil)
 
 // Templates renders a folder of templates to a local repository.
 type Templates struct {
