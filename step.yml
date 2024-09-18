@@ -40,7 +40,6 @@ inputs:
 - deploy_path: ""
   opts:
     title: Path to place rendered templates inside the repository
-    is_required: true
 - deploy_token: $DEPLOY_TOKEN
   opts:
     title: Personal Access Token to interact with Github API
