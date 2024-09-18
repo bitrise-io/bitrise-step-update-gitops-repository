@@ -12,7 +12,7 @@ type config struct {
 	// DeployRepositoryURL is the URL of the deployment (GitOps) repository.
 	DeployRepositoryURL string `env:"deploy_repository_url,required"`
 	// DeployFolder is the folder to render templates to in the deploy repository.
-	DeployFolder string `env:"deploy_path,required"`
+	DeployFolder string `env:"deploy_path"`
 	// DeployBranch is the branch to render templates to in the deploy repository.
 	DeployBranch string `env:"deploy_branch,required"`
 	// PullRequest won't push to the branch. It will open a PR only instead.
@@ -45,6 +45,10 @@ type config struct {
 
 func (c config) validate() error {
 	if !c.ReplacerMode {
+		if len(c.DeployFolder) == 0 {
+			return requiredError("DeployFolder")
+		}
+
 		if len(c.TemplatesFolder) == 0 {
 			return requiredError("TemplatesFolder")
 		}
