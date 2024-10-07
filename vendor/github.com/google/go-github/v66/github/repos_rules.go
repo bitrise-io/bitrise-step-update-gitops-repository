@@ -52,6 +52,7 @@ type RulesetRepositoryIDsConditionParameters struct {
 type RulesetRepositoryPropertyTargetParameters struct {
 	Name   string   `json:"name"`
 	Values []string `json:"property_values"`
+	Source string   `json:"source"`
 }
 
 // RulesetRepositoryPropertyConditionParameters represents the conditions object for repository_property.
@@ -84,6 +85,21 @@ type RuleFileParameters struct {
 	RestrictedFilePaths *[]string `json:"restricted_file_paths"`
 }
 
+// RuleMaxFilePathLengthParameters represents the max_file_path_length rule parameters.
+type RuleMaxFilePathLengthParameters struct {
+	MaxFilePathLength int `json:"max_file_path_length"`
+}
+
+// RuleFileExtensionRestrictionParameters represents the file_extension_restriction rule parameters.
+type RuleFileExtensionRestrictionParameters struct {
+	RestrictedFileExtensions []string `json:"restricted_file_extensions"`
+}
+
+// RuleMaxFileSizeParameters represents the max_file_size rule parameters.
+type RuleMaxFileSizeParameters struct {
+	MaxFileSize int64 `json:"max_file_size"`
+}
+
 // UpdateAllowsFetchAndMergeRuleParameters represents the update rule parameters.
 type UpdateAllowsFetchAndMergeRuleParameters struct {
 	UpdateAllowsFetchAndMerge bool `json:"update_allows_fetch_and_merge"`
@@ -109,8 +125,22 @@ type RuleRequiredStatusChecks struct {
 	IntegrationID *int64 `json:"integration_id,omitempty"`
 }
 
+// MergeQueueRuleParameters represents the merge_queue rule parameters.
+type MergeQueueRuleParameters struct {
+	CheckResponseTimeoutMinutes int `json:"check_response_timeout_minutes"`
+	// Possible values for GroupingStrategy are: ALLGREEN, HEADGREEN
+	GroupingStrategy  string `json:"grouping_strategy"`
+	MaxEntriesToBuild int    `json:"max_entries_to_build"`
+	MaxEntriesToMerge int    `json:"max_entries_to_merge"`
+	// Possible values for MergeMethod are: MERGE, SQUASH, REBASE
+	MergeMethod                  string `json:"merge_method"`
+	MinEntriesToMerge            int    `json:"min_entries_to_merge"`
+	MinEntriesToMergeWaitMinutes int    `json:"min_entries_to_merge_wait_minutes"`
+}
+
 // RequiredStatusChecksRuleParameters represents the required_status_checks rule parameters.
 type RequiredStatusChecksRuleParameters struct {
+	DoNotEnforceOnCreate             bool                       `json:"do_not_enforce_on_create"`
 	RequiredStatusChecks             []RuleRequiredStatusChecks `json:"required_status_checks"`
 	StrictRequiredStatusChecksPolicy bool                       `json:"strict_required_status_checks_policy"`
 }
@@ -152,7 +182,7 @@ func (r *RepositoryRule) UnmarshalJSON(data []byte) error {
 	r.Type = RepositoryRule.Type
 
 	switch RepositoryRule.Type {
-	case "creation", "deletion", "merge_queue", "non_fast_forward", "required_linear_history", "required_signatures":
+	case "creation", "deletion", "non_fast_forward", "required_linear_history", "required_signatures":
 		r.Parameters = nil
 	case "update":
 		if RepositoryRule.Parameters == nil {
@@ -168,7 +198,20 @@ func (r *RepositoryRule) UnmarshalJSON(data []byte) error {
 		rawParams := json.RawMessage(bytes)
 
 		r.Parameters = &rawParams
+	case "merge_queue":
+		if RepositoryRule.Parameters == nil {
+			r.Parameters = nil
+			return nil
+		}
+		params := MergeQueueRuleParameters{}
+		if err := json.Unmarshal(*RepositoryRule.Parameters, &params); err != nil {
+			return err
+		}
 
+		bytes, _ := json.Marshal(params)
+		rawParams := json.RawMessage(bytes)
+
+		r.Parameters = &rawParams
 	case "required_deployments":
 		params := RequiredDeploymentEnvironmentsRuleParameters{}
 		if err := json.Unmarshal(*RepositoryRule.Parameters, &params); err != nil {
@@ -228,6 +271,33 @@ func (r *RepositoryRule) UnmarshalJSON(data []byte) error {
 		rawParams := json.RawMessage(bytes)
 
 		r.Parameters = &rawParams
+	case "max_file_path_length":
+		params := RuleMaxFilePathLengthParameters{}
+		if err := json.Unmarshal(*RepositoryRule.Parameters, &params); err != nil {
+			return err
+		}
+		bytes, _ := json.Marshal(params)
+		rawParams := json.RawMessage(bytes)
+
+		r.Parameters = &rawParams
+	case "file_extension_restriction":
+		params := RuleFileExtensionRestrictionParameters{}
+		if err := json.Unmarshal(*RepositoryRule.Parameters, &params); err != nil {
+			return err
+		}
+		bytes, _ := json.Marshal(params)
+		rawParams := json.RawMessage(bytes)
+
+		r.Parameters = &rawParams
+	case "max_file_size":
+		params := RuleMaxFileSizeParameters{}
+		if err := json.Unmarshal(*RepositoryRule.Parameters, &params); err != nil {
+			return err
+		}
+		bytes, _ := json.Marshal(params)
+		rawParams := json.RawMessage(bytes)
+
+		r.Parameters = &rawParams
 	default:
 		r.Type = ""
 		r.Parameters = nil
@@ -238,7 +308,17 @@ func (r *RepositoryRule) UnmarshalJSON(data []byte) error {
 }
 
 // NewMergeQueueRule creates a rule to only allow merges via a merge queue.
-func NewMergeQueueRule() (rule *RepositoryRule) {
+func NewMergeQueueRule(params *MergeQueueRuleParameters) (rule *RepositoryRule) {
+	if params != nil {
+		bytes, _ := json.Marshal(params)
+
+		rawParams := json.RawMessage(bytes)
+
+		return &RepositoryRule{
+			Type:       "merge_queue",
+			Parameters: &rawParams,
+		}
+	}
 	return &RepositoryRule{
 		Type: "merge_queue",
 	}
@@ -416,11 +496,47 @@ func NewFilePathRestrictionRule(params *RuleFileParameters) (rule *RepositoryRul
 	}
 }
 
+// NewMaxFilePathLengthRule creates a rule to restrict file paths longer than the limit from being pushed.
+func NewMaxFilePathLengthRule(params *RuleMaxFilePathLengthParameters) (rule *RepositoryRule) {
+	bytes, _ := json.Marshal(params)
+
+	rawParams := json.RawMessage(bytes)
+
+	return &RepositoryRule{
+		Type:       "max_file_path_length",
+		Parameters: &rawParams,
+	}
+}
+
+// NewFileExtensionRestrictionRule creates a rule to restrict file extensions from being pushed to a commit.
+func NewFileExtensionRestrictionRule(params *RuleFileExtensionRestrictionParameters) (rule *RepositoryRule) {
+	bytes, _ := json.Marshal(params)
+
+	rawParams := json.RawMessage(bytes)
+
+	return &RepositoryRule{
+		Type:       "file_extension_restriction",
+		Parameters: &rawParams,
+	}
+}
+
+// NewMaxFileSizeRule creates a rule to restrict file sizes from being pushed to a commit.
+func NewMaxFileSizeRule(params *RuleMaxFileSizeParameters) (rule *RepositoryRule) {
+	bytes, _ := json.Marshal(params)
+
+	rawParams := json.RawMessage(bytes)
+
+	return &RepositoryRule{
+		Type:       "max_file_size",
+		Parameters: &rawParams,
+	}
+}
+
 // Ruleset represents a GitHub ruleset object.
 type Ruleset struct {
 	ID   *int64 `json:"id,omitempty"`
 	Name string `json:"name"`
-	// Possible values for Target are branch, tag
+	// Possible values for Target are branch, tag, push
 	Target *string `json:"target,omitempty"`
 	// Possible values for SourceType are: Repository, Organization
 	SourceType *string `json:"source_type,omitempty"`
