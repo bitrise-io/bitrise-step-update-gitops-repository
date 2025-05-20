@@ -32,14 +32,14 @@ func (rp Replacer) renderAllFiles() error {
 		if err != nil {
 			return fmt.Errorf("render file %q: %w", originalFile, err)
 		}
-		defer os.Remove(renderedFile)
+		defer os.Remove(renderedFile) //nolint:errcheck
 
 		// the rendered / replaced file becomes the source
 		source, err := os.Open(renderedFile)
 		if err != nil {
 			return fmt.Errorf("open rendered file: %w", err)
 		}
-		defer source.Close()
+		defer source.Close() //nolint:errcheck
 
 		// the original file location becomes the destionation
 		destination, err := os.Create(originalFile)
@@ -61,14 +61,14 @@ func (rp Replacer) renderFile(fileName string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("open file %s: %w", fileName, err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	// Create temporary file.
 	tmpFile, err := os.CreateTemp("", "")
 	if err != nil {
 		return "", fmt.Errorf("creating tmp file %s: %w", tmpFile.Name(), err)
 	}
-	defer tmpFile.Close()
+	defer tmpFile.Close() //nolint:errcheck
 
 	w := bufio.NewWriter(tmpFile)
 
@@ -93,7 +93,7 @@ func (rp Replacer) renderFile(fileName string) (string, error) {
 			break
 		}
 	}
-	w.Flush()
+	w.Flush() // nolint:errcheck
 
 	return tmpFile.Name(), nil
 }

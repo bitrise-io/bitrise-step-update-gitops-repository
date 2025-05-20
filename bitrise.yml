@@ -14,7 +14,7 @@ app:
     - BITRISE_STEP_GIT_CLONE_URL: https://github.com/bitrise-io/bitrise-step-update-gitops-repository.git
     - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
     - GOLANGCI_INSTALL_URL: https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh
-    - GOLANGCI_LINT_VERSION: "v1.51.2"
+    - GOLANGCI_LINT_VERSION: "v2.1.6"
 
 trigger_map:
   - pull_request_target_branch: master
@@ -29,7 +29,7 @@ workflows:
       - _install_golangci_lint
     steps:
       - activate-ssh-key@4: { }
-      - git-clone@4: { }
+      - git-clone@8: { }
       - script:
           title: Run unit tests
           inputs:
