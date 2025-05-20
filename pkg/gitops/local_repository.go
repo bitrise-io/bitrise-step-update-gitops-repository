@@ -3,7 +3,6 @@ package gitops
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -44,7 +43,7 @@ type NewGitRepoParams struct {
 // It should be closed after usage.
 func NewGitRepo(ctx context.Context, p NewGitRepoParams) (*gitRepo, error) {
 	// Temporary directory for local clone of repository.
-	tmpRepoPath, err := ioutil.TempDir("", "")
+	tmpRepoPath, err := os.MkdirTemp("", "")
 	if err != nil {
 		return nil, fmt.Errorf("create temp dir for repo: %w", err)
 	}
