@@ -29,7 +29,7 @@ workflows:
       - _install_golangci_lint
     steps:
       - activate-ssh-key@4: { }
-      - git-clone@4: { }
+      - git-clone@8.4.0: { }
       - script:
           title: Run unit tests
           inputs:
