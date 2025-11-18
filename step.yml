@@ -116,7 +116,32 @@ inputs:
     category: Replacer mode
     description: |
       List of files to scan for matching key-value pairs.
-      Required when "Replacer mode" is enabled.
+      Required when "Replacer mode" or "Regex replacer mode" is enabled.
+- regex_replacer_mode: false
+  opts:
+    title: Regex replacer mode
+    category: Regex replacer mode
+    description: |
+      There are situations when simple templating is not sufficient. 
+      Regex replacer mode enables multi-line matching & replacing values based
+      on regex, across multiple files.
+    value_options:
+    - "true"
+    - "false"
+- match_regex: ""
+  opts:
+    title: Match regex
+    category: Regex replacer mode
+    description: |
+      Regex pattern to match the lines to be replaced.
+      Required when "Regex replacer mode" is enabled.
+- replace_to: ""
+  opts:
+    title: Replace the regex matched lines to these lines
+    category: Regex replacer mode
+    description: |
+      Lines to replace the matched lines with.
+      Required when "Regex replacer mode" is enabled.
 
 outputs:
 - PR_URL:

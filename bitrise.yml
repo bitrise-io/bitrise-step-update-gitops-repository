@@ -82,6 +82,34 @@ workflows:
             - content: |
                 #!/bin/bash
                 echo "My Pull Request URL: $PR_URL"
+      - path::./:
+          title: Test updating regex matches in a GitOps repository file
+          inputs:
+            - deploy_repository_url: $DEPLOY_REPO_URL
+            - deploy_path: $DEPLOY_PATH
+            - pull_request: true
+            - deploy_user: $DEPLOY_USER
+            - deploy_branch: production
+            - regex_replacer_mode: true
+            - files:
+              - globals.yaml
+            - match_regex: |2 # Indented by two spaces, the rest is part of the value
+                    bitrise_agent_checksums_new:
+                      macos_arm: \w+
+                      macos_amd: \w+
+                      linux_arm: \w+
+                      linux_amd: \w+
+            - replace_to: |2 # Indented by two spaces, the rest is part of the value
+                    bitrise_agent_checksums_new:
+                      macos_arm: checksum-1
+                      macos_amd: checksum-2
+                      linux_arm: checksum-3
+                      linux_amd: checksum-4
+      - script:
+          inputs:
+            - content: |
+                #!/bin/bash
+                echo "My Pull Request URL: $PR_URL"
 
   _install_golangci_lint:
     description: Install golangci-lint
