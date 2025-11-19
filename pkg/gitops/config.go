@@ -41,27 +41,44 @@ type config struct {
 	RawFiles string `env:"files"`
 	// Files are required in replacer mode. List of files to find values in for replacement.
 	Files []string
+	// RegexReplacerMode enables regex based multi-line matching & replacing.
+	RegexReplacerMode bool `env:"regex_replacer_mode,required"`
+	// MatchRegex is the regex pattern to match in regex replacer mode.
+	MatchRegex string `env:"match_regex"`
+	// ReplaceTo is the string to replace the matched regex with in regex replacer mode.
+	ReplaceTo string `env:"replace_to"`
 }
 
 func (c config) validate() error {
-	if !c.ReplacerMode {
+	switch {
+	case c.ReplacerMode && c.RegexReplacerMode:
+		return fmt.Errorf("ReplacerMode and RegexReplacerMode cannot be enabled at the same time")
+	case c.ReplacerMode:
+		if len(c.Delimiter) == 0 {
+			return requiredError("Delimiter")
+		}
+		if len(c.Files) == 0 {
+			return requiredError("Files")
+		}
+		return nil
+	case c.RegexReplacerMode:
+		if len(c.MatchRegex) == 0 {
+			return requiredError("MatchRegex")
+		}
+		if len(c.ReplaceTo) == 0 {
+			return requiredError("ReplaceTo")
+		}
+		if len(c.Files) == 0 {
+			return requiredError("Files")
+		}
+	default: // Template mode
 		if len(c.DeployFolder) == 0 {
 			return requiredError("DeployFolder")
 		}
-
 		if len(c.TemplatesFolder) == 0 {
 			return requiredError("TemplatesFolder")
 		}
-		return nil
 	}
-
-	if len(c.Delimiter) == 0 {
-		return requiredError("Delimiter")
-	}
-	if len(c.Files) == 0 {
-		return requiredError("Files")
-	}
-
 	return nil
 }
 
@@ -76,7 +93,7 @@ func NewConfig() (config, error) {
 		return config{}, fmt.Errorf("parse values: %w", err)
 	}
 
-	if cfg.ReplacerMode {
+	if cfg.ReplacerMode || cfg.RegexReplacerMode {
 		files, err := parseStringSlice([]byte(cfg.RawFiles), cfg.Files)
 		if err != nil {
 			return config{}, fmt.Errorf("parsing files to string slice: %w", err)

@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"regexp"
+
 	"github.com/bitrise-io/bitrise-step-update-gitops-repository/pkg/gitops"
 	"github.com/bitrise-io/go-steputils/stepconf"
 )
@@ -59,7 +61,6 @@ func run() error {
 		DestinationRepo:   localRepo,
 		DestinationFolder: cfg.DeployFolder,
 	}
-
 	if cfg.ReplacerMode {
 		// Create templates replacer.
 		renderer = gitops.Replacer{
@@ -68,6 +69,18 @@ func run() error {
 			DestinationRepo:   localRepo,
 			DestinationFolder: cfg.DeployFolder,
 			Files:             cfg.Files,
+		}
+	} else if cfg.RegexReplacerMode {
+		re, err := regexp.Compile(cfg.MatchRegex)
+		if err != nil {
+			return fmt.Errorf("compile match regex %q: %w", cfg.MatchRegex, err)
+		}
+		renderer = gitops.RegexReplacer{
+			DestinationRepo:   localRepo,
+			DestinationFolder: cfg.DeployFolder,
+			Files:             cfg.Files,
+			MatchRegex:        re,
+			ReplaceTo:         cfg.ReplaceTo,
 		}
 	}
 
