@@ -52,22 +52,22 @@ func run() error {
 	defer localRepo.Close(ctx)
 
 	var renderer gitops.AllFilesRenderer
-	// Create templates renderer.
-	renderer = gitops.Templates{
-		SourceFolder:      cfg.TemplatesFolder,
-		Values:            cfg.Values,
-		DestinationRepo:   localRepo,
-		DestinationFolder: cfg.DeployFolder,
+
+	if len(cfg.Deployments) == 0 {
+		return fmt.Errorf("no deployments configured")
 	}
 
 	if cfg.ReplacerMode {
-		// Create templates replacer.
-		renderer = gitops.Replacer{
-			Values:            cfg.Values,
-			Delimiter:         cfg.Delimiter,
-			DestinationRepo:   localRepo,
-			DestinationFolder: cfg.DeployFolder,
-			Files:             cfg.Files,
+		renderer = gitops.MultiReplacer{
+			Delimiter:       cfg.Delimiter,
+			DestinationRepo: localRepo,
+			Deployments:     cfg.Deployments,
+		}
+	} else {
+		renderer = gitops.MultiTemplates{
+			SourceFolder:    cfg.TemplatesFolder,
+			Deployments:     cfg.Deployments,
+			DestinationRepo: localRepo,
 		}
 	}
 

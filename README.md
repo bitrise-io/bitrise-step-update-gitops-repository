@@ -9,6 +9,42 @@ URL of the pull request is exposed as an output in the latter case.
 Updated files are go templates rendered by substituting given values.
 A Github username and Personal Access Token must be provided with access to the repository.
 
+## Multiple deployments mode
+The step supports updating multiple deployment paths in a single commit. This is useful when you need to update several services in the same repository without creating multiple commits.
+
+### Example
+```yaml
+inputs:
+- templates_folder_path: deployments/helm/service
+- deploy_repository_url: https://github.com/bitrise-io/instance-management-deployments.git
+- deploy_branch: production
+- pull_request: false
+- deploy_user: "$DEPLOY_USER"
+- commit_message: "${BITRISE_GIT_MESSAGE}"
+- deployments: |
+    - path: package-foo
+      values:
+        repository: ${GAR_HOST}/${GAR_PROJECT_PRODUCTION}/${GAR_REPOSITORY}/package-foo
+        tag: ${RELEASE_TAG}
+    - path: package-bar
+      values:
+        repository: ${GAR_HOST}/${GAR_PROJECT_PRODUCTION}/${GAR_REPOSITORY}/package-bar
+        tag: ${RELEASE_TAG}
+```
+
+In this example, both services will be updated in a single commit to the GitOps repository.
+
+### Backwards compatibility
+The step maintains full backwards compatibility. You can still use the legacy `deploy_path` and `values` inputs for single deployments:
+
+```yaml
+inputs:
+- deploy_path: my-service
+- values: |
+    repository: example.com/repo/service
+    tag: v1.0.0
+```
+
 ## Replacer mode
 There are situation when simple templating is not sufficient (e.g.: 100 LOC config files). Replacer mode solves this issue by replacing values that match the provided key-delimiter combinations. 
 
@@ -35,6 +71,30 @@ inputs:
       us.gcr.io/ip-kubernetes-dev/hello-world-service: tag2
 ```
 In this case the step will look for maches in `example_config_file.yaml`, where the full path is `$DEPLOY_PATH/example_config_file.yaml`.
+
+### Replacer mode with multiple deployments
+You can also use replacer mode with multiple deployments:
+
+```yaml
+inputs:
+  - deploy_repository_url: $DEPLOY_REPO_URL
+  - pull_request: true
+  - deploy_user: $DEPLOY_USER
+  - deploy_branch: $BRANCH
+  - replacer_mode: true
+  - delimiter: ":"
+  - deployments: |
+      - path: service1
+        files:
+          - config.yaml
+        values:
+          us.gcr.io/ip-kubernetes-dev/service1: tag2
+      - path: service2
+        files:
+          - config.yaml
+        values:
+          us.gcr.io/ip-kubernetes-dev/service2: tag3
+```
 
 ### Caveats
 In Replacer mode, the step matches values up until the first comma, exclamation mark, single quote or double quote.

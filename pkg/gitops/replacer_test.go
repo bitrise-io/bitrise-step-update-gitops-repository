@@ -192,7 +192,7 @@ DEN_LINUX_x86_SHASUM=ec509e440a0fc64f9840c8e192f5e4573da972a93f3579c527b4dae9454
 				},
 			}
 
-			rendered, err := replacer.renderFile(source.Name())
+			rendered, err := replacer.renderFile(source.Name(), tc.values)
 			require.NoError(t, err, "renderFile")
 			defer os.Remove(rendered)
 

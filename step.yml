@@ -40,6 +40,31 @@ inputs:
 - deploy_path: ""
   opts:
     title: Path to place rendered templates inside the repository
+    description: |-
+      Deprecated: Use 'deployments' input for multiple deployments.
+      Path to place rendered templates inside the repository.
+      This is kept for backwards compatibility.
+- deployments: ""
+  opts:
+    title: Multiple deployment configurations
+    description: |-
+      Configure multiple deployments to update in a single commit.
+      Each deployment can have its own path and values.
+
+      For example:
+
+      ```yaml
+      - path: package-foo
+        values:
+          repository: example.com/repo/package-foo
+          tag: v1.0.0
+      - path: package-bar
+        values:
+          repository: example.com/repo/package-bar
+          tag: v1.0.0
+      ```
+
+      If specified, this will override 'deploy_path' and 'values' inputs.
 - deploy_token: $DEPLOY_TOKEN
   opts:
     title: Personal Access Token to interact with Github API
