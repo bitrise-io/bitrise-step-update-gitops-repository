@@ -14,76 +14,28 @@ type Replacer struct {
 	Delimiter string
 	// Destination repository for rendered files.
 	DestinationRepo localRepository
-	// Values to substitute into the templates.
-	Values map[string]string
-	// Files to search through for matches
-	Files []string
-	// Destination folder inside the repository for rendered files.
-	DestinationFolder string
-}
-
-// MultiReplacer replaces values in multiple deployment folders.
-type MultiReplacer struct {
-	// Delimiter to look for when rendering key-value pairs
-	Delimiter string
-	// Destination repository for rendered files.
-	DestinationRepo localRepository
 	// Deployments contains multiple deployment configurations.
 	Deployments []Deployment
 }
 
-// Ensure MultiReplacer implements AllFilesRenderer
-var _ AllFilesRenderer = (*MultiReplacer)(nil)
+var _ AllFilesRenderer = (*Replacer)(nil)
 
 func (rp Replacer) renderAllFiles() error {
-	// Replace values in files sitting in the destinaton folder one-by-one
-	// (substituting values given).
-	for _, file := range rp.Files {
-		originalFile := path.Join(rp.DestinationRepo.localPath(), rp.DestinationFolder, file)
-		renderedFile, err := rp.renderFile(originalFile, rp.Values)
-
-		if err != nil {
-			return fmt.Errorf("render file %q: %w", originalFile, err)
-		}
-		defer os.Remove(renderedFile) //nolint:errcheck
-
-		// the rendered / replaced file becomes the source
-		source, err := os.Open(renderedFile)
-		if err != nil {
-			return fmt.Errorf("open rendered file: %w", err)
-		}
-		defer source.Close() //nolint:errcheck
-
-		// the original file location becomes the destionation
-		destination, err := os.Create(originalFile)
-		if err != nil {
-			return fmt.Errorf("open destination file: %w", err)
-		}
-
-		// write the updated file contents to the original location
-		if err := copy(source, destination); err != nil {
-			return fmt.Errorf("saving rendered file: %w", err)
-		}
-	}
-	return nil
-}
-
-func (mrp MultiReplacer) renderAllFiles() error {
 	// Replace values in files for each deployment
-	for i, deployment := range mrp.Deployments {
-		if err := mrp.renderDeployment(deployment); err != nil {
+	for i, deployment := range rp.Deployments {
+		if err := rp.renderDeployment(deployment); err != nil {
 			return fmt.Errorf("render deployment[%d] in %q: %w", i, deployment.Path, err)
 		}
 	}
 	return nil
 }
 
-func (mrp MultiReplacer) renderDeployment(deployment Deployment) error {
+func (rp Replacer) renderDeployment(deployment Deployment) error {
 	// Replace values in files sitting in the destination folder one-by-one
 	// (substituting values given for this deployment).
 	for _, file := range deployment.Files {
-		originalFile := path.Join(mrp.DestinationRepo.localPath(), deployment.Path, file)
-		renderedFile, err := mrp.renderFile(originalFile, deployment.Values)
+		originalFile := path.Join(rp.DestinationRepo.localPath(), deployment.Path, file)
+		renderedFile, err := rp.renderFile(originalFile, deployment.Values)
 
 		if err != nil {
 			return fmt.Errorf("render file %q: %w", originalFile, err)
@@ -111,49 +63,6 @@ func (mrp MultiReplacer) renderDeployment(deployment Deployment) error {
 	return nil
 }
 
-func (mrp MultiReplacer) renderFile(fileName string, values map[string]string) (string, error) {
-	// Open file in local repository.
-	f, err := os.Open(fileName)
-	if err != nil {
-		return "", fmt.Errorf("open file %s: %w", fileName, err)
-	}
-	defer f.Close() //nolint:errcheck
-
-	// Create temporary file.
-	tmpFile, err := os.CreateTemp("", "")
-	if err != nil {
-		return "", fmt.Errorf("creating tmp file %s: %w", tmpFile.Name(), err)
-	}
-	defer tmpFile.Close() //nolint:errcheck
-
-	w := bufio.NewWriter(tmpFile)
-
-	// Read file and replace occurances line by line.
-	reader := bufio.NewReader(f)
-	var EOF bool
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			if err != io.EOF {
-				return "", fmt.Errorf("reading lines : %w", err)
-			}
-			EOF = true
-		}
-		replacedLine, err := replaceAll(line, mrp.Delimiter, values)
-		if err != nil {
-			return "", fmt.Errorf("could replace values in file (%s) line (%s): %w", fileName, line, err)
-		}
-		w.WriteString(replacedLine) // nolint:errcheck
-
-		if EOF {
-			break
-		}
-	}
-	w.Flush() // nolint:errcheck
-
-	return tmpFile.Name(), nil
-}
-
 func (rp Replacer) renderFile(fileName string, values map[string]string) (string, error) {
 	// Open file in local repository.
 	f, err := os.Open(fileName)
@@ -171,7 +80,7 @@ func (rp Replacer) renderFile(fileName string, values map[string]string) (string
 
 	w := bufio.NewWriter(tmpFile)
 
-	// Read file and replace occurances line by line.
+	// Read file and replace occurrences line by line.
 	reader := bufio.NewReader(f)
 	var EOF bool
 	for {
@@ -184,7 +93,7 @@ func (rp Replacer) renderFile(fileName string, values map[string]string) (string
 		}
 		replacedLine, err := replaceAll(line, rp.Delimiter, values)
 		if err != nil {
-			return "", fmt.Errorf("could replace values in file (%s) line (%s): %w", fileName, line, err)
+			return "", fmt.Errorf("could not replace values in file (%s) line (%s): %w", fileName, line, err)
 		}
 		w.WriteString(replacedLine) // nolint:errcheck
 

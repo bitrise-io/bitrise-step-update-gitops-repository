@@ -58,13 +58,13 @@ func run() error {
 	}
 
 	if cfg.ReplacerMode {
-		renderer = gitops.MultiReplacer{
+		renderer = gitops.Replacer{
 			Delimiter:       cfg.Delimiter,
 			DestinationRepo: localRepo,
 			Deployments:     cfg.Deployments,
 		}
 	} else {
-		renderer = gitops.MultiTemplates{
+		renderer = gitops.Templates{
 			SourceFolder:    cfg.TemplatesFolder,
 			Deployments:     cfg.Deployments,
 			DestinationRepo: localRepo,

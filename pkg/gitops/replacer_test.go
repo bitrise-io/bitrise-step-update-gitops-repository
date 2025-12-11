@@ -180,15 +180,19 @@ DEN_LINUX_x86_SHASUM=ec509e440a0fc64f9840c8e192f5e4573da972a93f3579c527b4dae9454
 
 			replacer := Replacer{
 				Delimiter: tc.delimiter,
-				Values:    tc.values,
+				Deployments: []Deployment{
+					{
+						Path:   path.Dir(source.Name()),
+						Values: tc.values,
+						Files: []string{
+							source.Name(),
+						},
+					},
+				},
 				DestinationRepo: &localRepositoryMock{
 					localPathFunc: func() string {
 						return ""
 					},
-				},
-				DestinationFolder: path.Dir(source.Name()),
-				Files: []string{
-					source.Name(),
 				},
 			}
 
@@ -272,20 +276,24 @@ stateless-service:
 
 			replacer := Replacer{
 				Delimiter: tc.delimiter,
-				Values:    tc.values,
+				Deployments: []Deployment{
+					{
+						Path:   testFolderName,
+						Values: tc.values,
+						Files:  files,
+					},
+				},
 				DestinationRepo: &localRepositoryMock{
 					localPathFunc: func() string {
 						return ""
 					},
 				},
-				DestinationFolder: testFolderName,
-				Files:             files,
 			}
 
 			err := replacer.renderAllFiles()
 			require.NoError(t, err, "renderAllFiles")
 
-			renderedFiles, err := os.ReadDir(replacer.DestinationFolder)
+			renderedFiles, err := os.ReadDir(testFolderName)
 			require.NoError(t, err, "ReadDir")
 			for _, file := range renderedFiles {
 				b, err := os.ReadFile(path.Join(testFolderName, file.Name()))
