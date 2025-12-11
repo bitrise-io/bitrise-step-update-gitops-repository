@@ -53,10 +53,6 @@ func run() error {
 
 	var renderer gitops.AllFilesRenderer
 
-	if len(cfg.Deployments) == 0 {
-		return fmt.Errorf("no deployments configured")
-	}
-
 	if cfg.ReplacerMode {
 		renderer = gitops.Replacer{
 			Delimiter:       cfg.Delimiter,
