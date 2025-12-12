@@ -48,14 +48,15 @@ workflows:
           title: Test updating files of a GitOps repository
           inputs:
             - deploy_repository_url: $DEPLOY_REPO_URL
-            - deploy_path: $DEPLOY_PATH
             - templates_folder_path: e2e/deployments/helm
             - pull_request: true
             - deploy_user: $DEPLOY_USER
             - deploy_branch: staging
-            - values: |
-                repository: us.gcr.io/ip-kubernetes-dev/hello-world-service
-                tag: test-tag
+            - deployments: |
+                - path: $DEPLOY_PATH
+                  values:
+                    repository: us.gcr.io/ip-kubernetes-dev/hello-world-service
+                    tag: test-tag
       - script:
           inputs:
             - content: |
@@ -65,18 +66,19 @@ workflows:
           title: Test updating matches in a GitOps repository file
           inputs:
             - deploy_repository_url: $DEPLOY_REPO_URL
-            - deploy_path: $DEPLOY_PATH
             - pull_request: true
             - deploy_user: $DEPLOY_USER
             - deploy_branch: staging
             - replacer_mode: true
             - delimiter: ":"
-            - files:
-              - values.yaml
-              - values.ci.yaml
-            - values: |
-                sm: //ip-backstage-dev/backstage-database-password2
-                us.gcr.io/ip-kubernetes-dev/hello-world-service: v6
+            - deployments: |
+                - path: $DEPLOY_PATH
+                  files:
+                    - values.yaml
+                    - values.ci.yaml
+                  values:
+                    sm: //ip-backstage-dev/backstage-database-password2
+                    us.gcr.io/ip-kubernetes-dev/hello-world-service: v6
       - script:
           inputs:
             - content: |
