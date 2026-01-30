@@ -163,13 +163,17 @@ func TestRenderAllFiles(t *testing.T) {
 			// Run Templates.renderAllFiles.
 			tr := Templates{
 				SourceFolder: templatesDir,
-				Values:       tc.values,
+				Deployments: []Deployment{
+					{
+						Path:   tc.folder,
+						Values: tc.values,
+					},
+				},
 				DestinationRepo: &localRepositoryMock{
 					localPathFunc: func() string {
 						return renderRepo
 					},
 				},
-				DestinationFolder: tc.folder,
 			}
 
 			// Assert for error.
