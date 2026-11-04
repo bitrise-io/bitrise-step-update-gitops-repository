@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/bitrise-io/go-steputils/stepconf"
@@ -105,6 +106,77 @@ func TestGitRepo(t *testing.T) {
 	}
 }
 
+func TestGitCommitAndPushOnlyPushesCurrentBranch(t *testing.T) {
+	ctx := context.Background()
+	const baseBranch = "staging"
+
+	newClone := func(t *testing.T, upstreamPath string) *gitRepo {
+		repo, err := NewGitRepo(ctx, NewGitRepoParams{
+			GithubRepo: &githubRepo{url: stepconf.Secret(upstreamPath)},
+			Branch:     baseBranch,
+		})
+		require.NoError(t, err, "new git repo")
+		t.Cleanup(func() { repo.Close(ctx) })
+		return repo
+	}
+
+	t.Run("other local branches are not pushed", func(t *testing.T) {
+		upstreamPath, close := localUpstreamRepo(t, baseBranch)
+		defer close()
+		repo := newClone(t, upstreamPath)
+
+		git(t, repo.localPath(), "branch", "unrelated")
+		write(t, path.Join(repo.localPath(), "change.go"), "package change")
+		require.NoError(t, repo.gitCommitAndPush("direct commit"), "commit and push")
+
+		assert.ElementsMatch(t, []string{baseBranch}, branches(t, upstreamPath), "upstream branches")
+		assert.Equal(t,
+			gitOutput(t, repo.localPath(), "rev-parse", "HEAD"),
+			gitOutput(t, upstreamPath, "rev-parse", "refs/heads/"+baseBranch),
+			"base branch updated")
+	})
+
+	t.Run("stale base branch is not pushed in pull request mode", func(t *testing.T) {
+		upstreamPath, close := localUpstreamRepo(t, baseBranch)
+		defer close()
+		repo := newClone(t, upstreamPath)
+
+		// Another run updates the base branch after this clone was made,
+		// leaving the local copy of the base branch behind the remote.
+		write(t, path.Join(upstreamPath, "concurrent.go"), "package concurrent")
+		git(t, upstreamPath, "add", "--all")
+		git(t, upstreamPath, "commit", "-m", "concurrent commit")
+		concurrentHead := gitOutput(t, upstreamPath, "rev-parse", "HEAD")
+
+		require.NoError(t, repo.gitCheckoutNewBranch(), "new branch")
+		write(t, path.Join(repo.localPath(), "change.go"), "package change")
+		require.NoError(t, repo.gitCommitAndPush("pull request commit"), "commit and push")
+
+		head, err := repo.currentBranch()
+		require.NoError(t, err, "current branch")
+		assert.ElementsMatch(t, []string{baseBranch, head}, branches(t, upstreamPath), "upstream branches")
+		assert.Equal(t,
+			concurrentHead,
+			gitOutput(t, upstreamPath, "rev-parse", "refs/heads/"+baseBranch),
+			"base branch untouched")
+		assert.Equal(t,
+			gitOutput(t, repo.localPath(), "rev-parse", "HEAD"),
+			gitOutput(t, upstreamPath, "rev-parse", "refs/heads/"+head),
+			"head branch pushed")
+	})
+
+	t.Run("detached HEAD is rejected", func(t *testing.T) {
+		upstreamPath, close := localUpstreamRepo(t, baseBranch)
+		defer close()
+		repo := newClone(t, upstreamPath)
+
+		git(t, repo.localPath(), "checkout", "--detach")
+		write(t, path.Join(repo.localPath(), "change.go"), "package change")
+		require.Error(t, repo.gitCommitAndPush("detached commit"), "commit and push")
+		assert.ElementsMatch(t, []string{baseBranch}, branches(t, upstreamPath), "upstream branches")
+	})
+}
+
 func localUpstreamRepo(t *testing.T, branch string) (string, func()) {
 	repoPath, err := ioutil.TempDir("", "")
 	require.NoError(t, err, "new temp directory for local upstream")
@@ -140,4 +212,17 @@ func git(t *testing.T, repoPath string, args ...string) {
 
 	cmd := exec.Command("git", args...)
 	require.NoError(t, cmd.Run(), "git %+v", args)
+}
+
+func gitOutput(t *testing.T, repoPath string, args ...string) string {
+	cmd := exec.Command("git", args...)
+	cmd.Dir = repoPath
+	out, err := cmd.Output()
+	require.NoError(t, err, "git %+v", args)
+	return strings.TrimSpace(string(out))
+}
+
+func branches(t *testing.T, repoPath string) []string {
+	return strings.Fields(gitOutput(t, repoPath,
+		"for-each-ref", "--format=%(refname:short)", "refs/heads/"))
 }

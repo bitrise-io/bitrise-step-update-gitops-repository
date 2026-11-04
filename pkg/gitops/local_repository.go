@@ -101,12 +101,24 @@ func (r gitRepo) gitCheckoutNewBranch() error {
 }
 
 func (r gitRepo) gitCommitAndPush(message string) error {
+	// The commit lands on the checked out branch: the deploy branch itself,
+	// or the freshly created head branch in pull request mode.
+	branch, err := r.currentBranch()
+	if err != nil {
+		return fmt.Errorf("current branch: %w", err)
+	}
+	if branch == "HEAD" {
+		return fmt.Errorf("cannot push from a detached HEAD")
+	}
+
 	// Stage all changes, commit them to the current branch
-	// and push the commit to the remote repository.
+	// and push only that branch to the remote repository.
+	// Other local branches must not be pushed: they may be stale copies
+	// of branches that concurrent runs are updating on the remote.
 	gitArgs := [][]string{
 		{"add", "--all"},
 		{"commit", "-m", message},
-		{"push", "--all", "-u"},
+		{"push", "origin", pushRefspec(branch)},
 	}
 	for _, a := range gitArgs {
 		if _, err := r.git(a...); err != nil {
@@ -114,6 +126,14 @@ func (r gitRepo) gitCommitAndPush(message string) error {
 		}
 	}
 	return nil
+}
+
+// pushRefspec returns a refspec that updates exactly the given branch on the
+// remote from the local branch of the same name. Fully qualified refs are used
+// so a tag sharing the branch's name cannot make the refspec ambiguous.
+func pushRefspec(branch string) string {
+	ref := "refs/heads/" + branch
+	return ref + ":" + ref
 }
 
 func (r gitRepo) currentBranch() (string, error) {
