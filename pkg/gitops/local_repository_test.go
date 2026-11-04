@@ -7,8 +7,10 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/stretchr/testify/assert"
@@ -203,6 +205,130 @@ func TestGitCommitAndPushOnlyPushesCurrentBranch(t *testing.T) {
 		require.Error(t, repo.gitCommitAndPush("detached commit"), "commit and push")
 		assert.ElementsMatch(t, []string{baseBranch}, branches(t, upstreamPath), "upstream branches")
 	})
+}
+
+func TestGitCommitAndPushRetriesTransientRejections(t *testing.T) {
+	ctx := context.Background()
+	const branch = "staging"
+	retryDelays := []time.Duration{time.Second, 2 * time.Second}
+
+	newClone := func(t *testing.T, upstreamPath string) (*gitRepo, *[]time.Duration) {
+		repo, err := NewGitRepo(ctx, NewGitRepoParams{
+			GithubRepo: &githubRepo{url: stepconf.Secret(upstreamPath)},
+			Branch:     branch,
+		})
+		require.NoError(t, err, "new git repo")
+		t.Cleanup(func() { repo.Close(ctx) })
+		var slept []time.Duration
+		repo.pushRetryDelays = retryDelays
+		repo.sleep = func(d time.Duration) { slept = append(slept, d) }
+		return repo, &slept
+	}
+
+	cases := map[string]struct {
+		rejections   int    // pushes the remote rejects before accepting one
+		message      string // what the remote reports when rejecting
+		wantAttempts int
+		wantSlept    []time.Duration
+		wantErr      bool
+	}{
+		"internal server error is retried": {
+			rejections:   1,
+			message:      "fatal error in commit_refs",
+			wantAttempts: 2,
+			wantSlept:    retryDelays[:1],
+		},
+		"protected branch rejection is retried": {
+			rejections:   1,
+			message:      "error: GH006: Protected branch update failed for refs/heads/staging.",
+			wantAttempts: 2,
+			wantSlept:    retryDelays[:1],
+		},
+		"retries are bounded": {
+			rejections:   10,
+			message:      "fatal error in commit_refs",
+			wantAttempts: len(retryDelays) + 1,
+			wantSlept:    retryDelays,
+			wantErr:      true,
+		},
+		"other rejections are not retried": {
+			rejections:   10,
+			message:      "error: push declined by policy",
+			wantAttempts: 1,
+			wantErr:      true,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			upstreamPath, close := localUpstreamRepo(t, branch)
+			defer close()
+			attempts := rejectPushes(t, upstreamPath, tc.rejections, tc.message)
+			repo, slept := newClone(t, upstreamPath)
+
+			write(t, path.Join(repo.localPath(), "change.go"), "package change")
+			err := repo.gitCommitAndPush("commit")
+
+			assert.Equal(t, tc.wantAttempts, attempts(), "push attempts")
+			assert.Equal(t, tc.wantSlept, *slept, "waits between attempts")
+			if tc.wantErr {
+				require.Error(t, err, "commit and push")
+				assert.Contains(t, err.Error(), tc.message, "error reports the rejection")
+				return
+			}
+			require.NoError(t, err, "commit and push")
+			assert.Equal(t,
+				gitOutput(t, repo.localPath(), "rev-parse", "HEAD"),
+				gitOutput(t, upstreamPath, "rev-parse", "refs/heads/"+branch),
+				"branch updated")
+		})
+	}
+
+	t.Run("non-fast-forward is not retried", func(t *testing.T) {
+		upstreamPath, close := localUpstreamRepo(t, branch)
+		defer close()
+		attempts := rejectPushes(t, upstreamPath, 0, "")
+		repo, slept := newClone(t, upstreamPath)
+
+		// The branch moves on the remote after the clone was made.
+		write(t, path.Join(upstreamPath, "concurrent.go"), "package concurrent")
+		git(t, upstreamPath, "add", "--all")
+		git(t, upstreamPath, "commit", "-m", "concurrent commit")
+
+		write(t, path.Join(repo.localPath(), "change.go"), "package change")
+		require.Error(t, repo.gitCommitAndPush("commit"), "commit and push")
+		assert.Empty(t, *slept, "waits between attempts")
+		assert.Zero(t, attempts(), "pushes reaching the remote")
+	})
+}
+
+// rejectPushes makes the upstream repository reject its first n pushes,
+// reporting message to the pushing client. The returned function tells how
+// many pushes have reached the upstream repository so far.
+func rejectPushes(t *testing.T, upstreamPath string, n int, message string) func() int {
+	hooksDir := t.TempDir()
+	counterPath := path.Join(t.TempDir(), "attempts")
+	hook := fmt.Sprintf(`#!/bin/sh
+n=$(cat %[1]q 2>/dev/null || echo 0)
+n=$((n + 1))
+echo "$n" > %[1]q
+if [ "$n" -le %[2]d ]; then
+	echo %[3]q >&2
+	exit 1
+fi
+`, counterPath, n, message)
+	require.NoError(t, os.WriteFile(path.Join(hooksDir, "pre-receive"), []byte(hook), 0700), "write hook")
+	git(t, upstreamPath, "config", "core.hooksPath", hooksDir)
+
+	return func() int {
+		out, err := os.ReadFile(counterPath)
+		if os.IsNotExist(err) {
+			return 0
+		}
+		require.NoError(t, err, "read push attempts")
+		attempts, err := strconv.Atoi(strings.TrimSpace(string(out)))
+		require.NoError(t, err, "parse push attempts")
+		return attempts
+	}
 }
 
 func localUpstreamRepo(t *testing.T, branch string) (string, func()) {
