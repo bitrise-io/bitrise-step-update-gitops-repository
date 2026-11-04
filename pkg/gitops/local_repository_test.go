@@ -165,6 +165,34 @@ func TestGitCommitAndPushOnlyPushesCurrentBranch(t *testing.T) {
 			"head branch pushed")
 	})
 
+	t.Run("branch sharing its name with a tag is pushed", func(t *testing.T) {
+		upstreamPath, close := localUpstreamRepo(t, baseBranch)
+		defer close()
+		git(t, upstreamPath, "tag", baseBranch)
+		taggedCommit := gitOutput(t, upstreamPath, "rev-parse", "refs/tags/"+baseBranch)
+		repo := newClone(t, upstreamPath)
+		require.Equal(t, baseBranch,
+			gitOutput(t, repo.localPath(), "tag", "--list", baseBranch),
+			"clone has the same-named tag")
+
+		branch, err := repo.currentBranch()
+		require.NoError(t, err, "current branch")
+		assert.Equal(t, baseBranch, branch, "current branch")
+
+		write(t, path.Join(repo.localPath(), "change.go"), "package change")
+		require.NoError(t, repo.gitCommitAndPush("direct commit"), "commit and push")
+
+		assert.ElementsMatch(t, []string{baseBranch}, branches(t, upstreamPath), "upstream branches")
+		assert.Equal(t,
+			gitOutput(t, repo.localPath(), "rev-parse", "HEAD"),
+			gitOutput(t, upstreamPath, "rev-parse", "refs/heads/"+baseBranch),
+			"base branch updated")
+		assert.Equal(t,
+			taggedCommit,
+			gitOutput(t, upstreamPath, "rev-parse", "refs/tags/"+baseBranch),
+			"tag untouched")
+	})
+
 	t.Run("detached HEAD is rejected", func(t *testing.T) {
 		upstreamPath, close := localUpstreamRepo(t, baseBranch)
 		defer close()
@@ -224,5 +252,5 @@ func gitOutput(t *testing.T, repoPath string, args ...string) string {
 
 func branches(t *testing.T, repoPath string) []string {
 	return strings.Fields(gitOutput(t, repoPath,
-		"for-each-ref", "--format=%(refname:short)", "refs/heads/"))
+		"for-each-ref", "--format=%(refname:lstrip=2)", "refs/heads/"))
 }

@@ -107,9 +107,6 @@ func (r gitRepo) gitCommitAndPush(message string) error {
 	if err != nil {
 		return fmt.Errorf("current branch: %w", err)
 	}
-	if branch == "HEAD" {
-		return fmt.Errorf("cannot push from a detached HEAD")
-	}
 
 	// Stage all changes, commit them to the current branch
 	// and push only that branch to the remote repository.
@@ -136,12 +133,22 @@ func pushRefspec(branch string) string {
 	return ref + ":" + ref
 }
 
+// currentBranch returns the name of the checked out branch.
+// It fails when HEAD is detached.
 func (r gitRepo) currentBranch() (string, error) {
-	branch, err := r.git("rev-parse", "--abbrev-ref", "HEAD")
+	// The full ref is read and its prefix stripped here, because git's own
+	// abbreviation (rev-parse --abbrev-ref, symbolic-ref --short) yields
+	// "heads/<branch>" when a tag has the same name as the branch.
+	out, err := r.git("symbolic-ref", "HEAD")
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(branch), nil
+	ref := strings.TrimSpace(out)
+	branch, ok := strings.CutPrefix(ref, "refs/heads/")
+	if !ok {
+		return "", fmt.Errorf("HEAD points to %q, not a local branch", ref)
+	}
+	return branch, nil
 }
 
 func (r gitRepo) git(args ...string) (string, error) {
