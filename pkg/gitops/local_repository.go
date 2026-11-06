@@ -29,7 +29,28 @@ type gitRepo struct {
 	githubRepo *githubRepo
 	branch     string
 
+	// pushRetryDelays are the waits before each retry of a push that failed
+	// with one of transientPushErrors; their count bounds the retries.
+	pushRetryDelays []time.Duration
+	sleep           func(time.Duration)
+
 	tmpRepoPath string
+}
+
+// defaultPushRetryDelays allow four push attempts within about 15 seconds.
+var defaultPushRetryDelays = []time.Duration{2 * time.Second, 4 * time.Second, 8 * time.Second}
+
+// transientPushErrors are server-side push rejections that GitHub has
+// returned while another push to the same repository was in progress, and
+// that did not recur when the run was repeated.
+//
+// A genuine branch protection violation also reports GH006; retrying it only
+// delays the same error. A retry can never overwrite someone else's commit:
+// the push is not forced, so if the branch really moved on the remote, the
+// next attempt is rejected as non-fast-forward, which is not retried.
+var transientPushErrors = []string{
+	"fatal error in commit_refs",
+	"GH006: Protected branch update failed",
 }
 
 // NewGitRepoParams are parameters for NewGitRepo function.
@@ -52,6 +73,9 @@ func NewGitRepo(ctx context.Context, p NewGitRepoParams) (*gitRepo, error) {
 		githubRepo:  p.GithubRepo,
 		branch:      p.Branch,
 		tmpRepoPath: tmpRepoPath,
+
+		pushRetryDelays: defaultPushRetryDelays,
+		sleep:           time.Sleep,
 	}
 	if err := repo.gitClone(); err != nil {
 		return nil, fmt.Errorf("git clone repo: %w", err)
@@ -101,27 +125,75 @@ func (r gitRepo) gitCheckoutNewBranch() error {
 }
 
 func (r gitRepo) gitCommitAndPush(message string) error {
+	// The commit lands on the checked out branch: the deploy branch itself,
+	// or the freshly created head branch in pull request mode.
+	branch, err := r.currentBranch()
+	if err != nil {
+		return fmt.Errorf("current branch: %w", err)
+	}
+
 	// Stage all changes, commit them to the current branch
-	// and push the commit to the remote repository.
+	// and push only that branch to the remote repository.
+	// In pull request mode the local deploy branch is left as it was cloned;
+	// if it has moved on the remote since, pushing it as well would make the
+	// push fail even though the pull request branch itself was pushed.
 	gitArgs := [][]string{
 		{"add", "--all"},
 		{"commit", "-m", message},
-		{"push", "--all", "-u"},
 	}
 	for _, a := range gitArgs {
 		if _, err := r.git(a...); err != nil {
 			return err
 		}
 	}
-	return nil
+	return r.gitPush(branch)
 }
 
+func (r gitRepo) gitPush(branch string) error {
+	for attempt := 0; ; attempt++ {
+		_, err := r.git("push", "origin", pushRefspec(branch))
+		if err == nil || attempt >= len(r.pushRetryDelays) || !isTransientPushError(err) {
+			return err
+		}
+		delay := r.pushRetryDelays[attempt]
+		log.Printf("warning: push rejected by the remote, retrying in %s: %s\n", delay, err)
+		r.sleep(delay)
+	}
+}
+
+func isTransientPushError(err error) bool {
+	for _, s := range transientPushErrors {
+		if strings.Contains(err.Error(), s) {
+			return true
+		}
+	}
+	return false
+}
+
+// pushRefspec returns a refspec that updates exactly the given branch on the
+// remote from the local branch of the same name. Fully qualified refs are used
+// so a tag sharing the branch's name cannot make the refspec ambiguous.
+func pushRefspec(branch string) string {
+	ref := "refs/heads/" + branch
+	return ref + ":" + ref
+}
+
+// currentBranch returns the name of the checked out branch.
+// It fails when HEAD is detached.
 func (r gitRepo) currentBranch() (string, error) {
-	branch, err := r.git("rev-parse", "--abbrev-ref", "HEAD")
+	// The full ref is read and its prefix stripped here, because git's own
+	// abbreviation (rev-parse --abbrev-ref, symbolic-ref --short) yields
+	// "heads/<branch>" when a tag has the same name as the branch.
+	out, err := r.git("symbolic-ref", "HEAD")
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(branch), nil
+	ref := strings.TrimSpace(out)
+	branch, ok := strings.CutPrefix(ref, "refs/heads/")
+	if !ok {
+		return "", fmt.Errorf("HEAD points to %q, not a local branch", ref)
+	}
+	return branch, nil
 }
 
 func (r gitRepo) git(args ...string) (string, error) {
